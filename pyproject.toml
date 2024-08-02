@@ -21,8 +21,8 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
-Repository = "https://github.com/christiansandberg/sdf-utils.git"
-Issues = "https://github.com/christiansandberg/sdf-utils/issues"
+Repository = "https://github.com/christiansandberg/onedm.git"
+Issues = "https://github.com/christiansandberg/onedm/issues"
 
 [tool.setuptools_scm]
 
