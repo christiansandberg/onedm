@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 
 import pytest
-import sdf
+from onedm import sdf
 
 
 @pytest.fixture(scope="session")

@@ -1,4 +1,4 @@
-import sdf
+from onedm import sdf
 
 
 def test_integer_data(test_model: sdf.SDF):

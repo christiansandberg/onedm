@@ -1,6 +1,6 @@
 [project]
-name = "sdf-utils"
-description = "Semantic Definition Format (SDF) for Data and Interactions of Things"
+name = "onedm"
+description = "Common data model for IoT and IoT devices"
 keywords = ["iot", "data model"]
 authors = [
     {name = "Christian Sandberg", email = "christiansandberg@me.com"},

@@ -10,7 +10,7 @@ from abc import ABC
 from enum import Enum
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import Field, NonNegativeInt
+from pydantic import Field, NonNegativeInt, model_validator
 from pydantic_core import SchemaValidator, core_schema
 
 from .common import CommonQualities
@@ -47,7 +47,7 @@ class DataQualities(CommonQualities, ABC):
 
 
 class NumberData(DataQualities):
-    type: Literal[DataType.NUMBER] = DataType.NUMBER
+    type: Literal[DataType.NUMBER]
     unit: str | None = None
     minimum: float | None = None
     maximum: float | None = None
@@ -57,6 +57,13 @@ class NumberData(DataQualities):
     format: str | None = None
     const: float | None = None
     default: float | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_type(cls, data: Any):
+        if isinstance(data, dict):
+            data.setdefault("type", DataType.NUMBER)
+        return data
 
     def get_pydantic_schema(self) -> core_schema.FloatSchema:
         return core_schema.float_schema(
@@ -72,7 +79,7 @@ class NumberData(DataQualities):
 
 
 class IntegerData(DataQualities):
-    type: Literal[DataType.INTEGER] = DataType.INTEGER
+    type: Literal[DataType.INTEGER]
     unit: str | None = None
     minimum: int | None = None
     maximum: int | None = None
@@ -83,6 +90,13 @@ class IntegerData(DataQualities):
     choices: dict[str, IntegerData] | None = Field(None, alias="sdfChoice")
     const: int | None = None
     default: int | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_type(cls, data: Any):
+        if isinstance(data, dict):
+            data.setdefault("type", DataType.INTEGER)
+        return data
 
     def get_pydantic_schema(self) -> core_schema.IntSchema:
         return core_schema.int_schema(
@@ -98,9 +112,16 @@ class IntegerData(DataQualities):
 
 
 class BooleanData(DataQualities):
-    type: Literal[DataType.BOOLEAN] = DataType.BOOLEAN
+    type: Literal[DataType.BOOLEAN]
     const: bool | None = None
     default: bool | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_type(cls, data: Any):
+        if isinstance(data, dict):
+            data.setdefault("type", DataType.BOOLEAN)
+        return data
 
     def get_pydantic_schema(self) -> core_schema.BoolSchema:
         return core_schema.bool_schema()
@@ -110,7 +131,7 @@ class BooleanData(DataQualities):
 
 
 class StringData(DataQualities):
-    type: Literal[DataType.STRING] = DataType.STRING
+    type: Literal[DataType.STRING]
     enum: list[str] | None = None
     min_length: NonNegativeInt = 0
     max_length: NonNegativeInt | None = None
@@ -120,6 +141,13 @@ class StringData(DataQualities):
     choices: dict[str, StringData] | None = Field(None, alias="sdfChoice")
     const: str | None = None
     default: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_type(cls, data: Any):
+        if isinstance(data, dict):
+            data.setdefault("type", DataType.STRING)
+        return data
 
     def get_pydantic_schema(self) -> core_schema.StringSchema | core_schema.BytesSchema:
         if self.sdf_type == "byte-string":
@@ -137,13 +165,20 @@ class StringData(DataQualities):
 
 
 class ArrayData(DataQualities):
-    type: Literal[DataType.ARRAY] = DataType.ARRAY
+    type: Literal[DataType.ARRAY]
     min_items: NonNegativeInt = 0
     max_items: NonNegativeInt | None = None
     unique_items: bool = False
     items: Data | None = None
     const: list | None = None
     default: list | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_type(cls, data: Any):
+        if isinstance(data, dict):
+            data.setdefault("type", DataType.ARRAY)
+        return data
 
     def get_pydantic_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
         if self.unique_items:
@@ -163,10 +198,17 @@ class ArrayData(DataQualities):
 
 
 class ObjectData(DataQualities):
-    type: Literal[DataType.OBJECT] = DataType.OBJECT
+    type: Literal[DataType.OBJECT]
     required: list[str] | None = None
     properties: dict[str, Data] | None = None
     const: dict[str, Any] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_default_type(cls, data: Any):
+        if isinstance(data, dict):
+            data.setdefault("type", DataType.OBJECT)
+        return data
 
     def get_pydantic_schema(self) -> core_schema.TypedDictSchema:
         required = self.required or []

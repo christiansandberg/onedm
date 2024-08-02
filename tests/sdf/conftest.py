@@ -1,7 +1,7 @@
 from pathlib import Path
 import pytest
 
-import sdf
+from onedm import sdf
 
 
 @pytest.fixture(scope="session")

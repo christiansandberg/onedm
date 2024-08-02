@@ -1,4 +1,4 @@
-import sdf
+from onedm import sdf
 
 
 def test_reference(test_model: sdf.SDF):
