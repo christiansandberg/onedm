@@ -1,0 +1,121 @@
+{
+  "info": {
+    "title": "Example document for SDF (Semantic Definition Format)",
+    "version": "2019-04-24",
+    "copyright": "Copyright 2019 Example Corp. All rights reserved.",
+    "license": "https://example.com/license"
+  },
+  "namespace": {
+    "cap": "https://example.com/capability/cap"
+  },
+  "defaultNamespace": "cap",
+  "sdfProperty": {
+    "IntegerProperty": {
+      "label": "Example integer",
+      "sdfRef": "#/sdfData/Integer"
+    },
+    "NumberProperty": {
+      "label": "Example number",
+      "sdfRef": "#/sdfData/Number"
+    },
+    "BooleanProperty": {
+      "label": "Example boolean",
+      "sdfRef": "#/sdfData/Boolean"
+    },
+    "StringProperty": {
+      "label": "Example string",
+      "sdfRef": "#/sdfData/String"
+    },
+    "ArrayProperty": {
+      "label": "Example array",
+      "sdfRef": "#/sdfData/Array"
+    },
+    "ObjectProperty": {
+      "label": "Example object",
+      "sdfRef": "#/sdfData/Object"
+    },
+    "UnknownProperty": {
+      "label": "Example"
+    }
+  },
+  "sdfObject": {
+    "TestObject": {
+      "sdfProperty": {
+        "TestProperty": {
+          "description": "The state of the switch; false for off and true for on.",
+          "type": "boolean"
+        }
+      },
+      "sdfAction": {
+        "on": {
+          "description": "Turn the switch on; equivalent to setting value to true."
+        },
+        "off": {
+          "description": "Turn the switch off; equivalent to setting value to false."
+        },
+        "toggle": {
+          "description": "Toggle the switch; equivalent to setting value to its complement."
+        }
+      }
+    }
+  },
+  "sdfData": {
+    "Integer": {
+      "type": "integer",
+      "minimum": -2,
+      "maximum": 2,
+      "multipleOf": 2,
+      "const": 2
+    },
+    "Number": {
+      "type": "number",
+      "minimum": -1.5,
+      "maximum": 1.5,
+      "multipleOf": 0.5
+    },
+    "String": {
+      "type": "string",
+      "minLength": 10,
+      "maxLength": 100,
+      "pattern": ".*"
+    },
+    "ByteString": {
+      "type": "string",
+      "sdfType": "byte-string"
+    },
+    "Boolean": {
+      "type": "boolean",
+      "const": true
+    },
+    "Enum": {
+      "type": "integer",
+      "sdfChoice": {
+        "One": {
+          "const": 1
+        }
+      }
+    },
+    "Array": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 5,
+      "items": {
+        "type": "integer"
+      }
+    },
+    "Object": {
+      "type": "object",
+      "properties": {
+        "prop1": {
+          "type": "number"
+        }
+      },
+      "required": ["prop1"]
+    },
+    "Unknown": {},
+    "Reference": {
+      "sdfRef": "#/sdfData/Integer",
+      "const": 0
+    }
+  }
+}

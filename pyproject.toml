@@ -1,0 +1,31 @@
+[project]
+name = "sdf-utils"
+description = "Semantic Definition Format (SDF) for Data and Interactions of Things"
+keywords = ["iot", "data model"]
+authors = [
+    {name = "Christian Sandberg", email = "christiansandberg@me.com"},
+]
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: File Formats",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "pydantic>=2",
+]
+dynamic = ["version"]
+
+[project.urls]
+Repository = "https://github.com/christiansandberg/sdf-utils.git"
+Issues = "https://github.com/christiansandberg/sdf-utils/issues"
+
+[tool.setuptools_scm]
+
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
