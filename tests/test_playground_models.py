@@ -10,7 +10,9 @@ import sdf
 @pytest.fixture(scope="session")
 def playground():
     with tempfile.TemporaryDirectory() as tmpdir:
-        subprocess.run(["git", "clone", "https://github.com/one-data-model/playground.git", tmpdir])
+        subprocess.run(
+            ["git", "clone", "https://github.com/one-data-model/playground.git", tmpdir]
+        )
         yield Path(tmpdir)
 
 
@@ -39,7 +41,10 @@ def test_genericonoff(playground: Path):
     doc = loader.to_sdf()
 
     assert doc.info.title == "Example Bluetooth mesh Generic OnOff Model"
-    assert doc.info.license == "https://github.com/one-data-model/oneDM/blob/master/LICENSE"
+    assert (
+        doc.info.license
+        == "https://github.com/one-data-model/oneDM/blob/master/LICENSE"
+    )
 
     on_off = doc.objects["GenericOnOff"].properties["OnOff"]
     assert isinstance(on_off, sdf.AnyProperty)

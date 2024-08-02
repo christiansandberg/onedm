@@ -5,7 +5,9 @@ from pydantic.alias_generators import to_camel
 
 
 class CommonQualities(BaseModel):
-    model_config = ConfigDict(extra="allow", validate_assignment=True, alias_generator=to_camel)
+    model_config = ConfigDict(
+        extra="allow", validate_assignment=True, alias_generator=to_camel
+    )
 
     label: str | None = None
     description: str | None = None

@@ -55,7 +55,9 @@ class SDFLoader:
                     ref_root = self._namespaces[namespace].root
                 else:
                     # Extension to standard, support relative URIs in namespaces
-                    ref_url = urllib.parse.urljoin(self.url, self.root["namespace"][namespace])
+                    ref_url = urllib.parse.urljoin(
+                        self.url, self.root["namespace"][namespace]
+                    )
                     loader = SDFLoader()
                     loader.load(ref_url)
                     # Cache the loaded namespace
