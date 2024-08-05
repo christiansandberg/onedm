@@ -62,26 +62,29 @@
   "sdfData": {
     "Integer": {
       "type": "integer",
+      "nullable": false,
       "minimum": -2,
       "maximum": 2,
-      "multipleOf": 2,
-      "const": 2
+      "multipleOf": 2
     },
     "Number": {
       "type": "number",
+      "nullable": false,
       "minimum": -1.5,
       "maximum": 1.5,
       "multipleOf": 0.5
     },
     "String": {
       "type": "string",
+      "nullable": false,
       "minLength": 10,
       "maxLength": 100,
       "pattern": ".*"
     },
     "ByteString": {
       "type": "string",
-      "sdfType": "byte-string"
+      "sdfType": "byte-string",
+      "nullable": false
     },
     "Boolean": {
       "type": "boolean",
@@ -89,6 +92,7 @@
     },
     "Enum": {
       "type": "integer",
+      "nullable": false,
       "sdfChoice": {
         "One": {
           "const": 1
@@ -97,6 +101,7 @@
     },
     "Array": {
       "type": "array",
+      "nullable": false,
       "minItems": 1,
       "maxItems": 5,
       "items": {
@@ -105,12 +110,19 @@
     },
     "Object": {
       "type": "object",
+      "nullable": false,
       "properties": {
         "prop1": {
           "type": "number"
         }
       },
       "required": ["prop1"]
+    },
+    "NullableInteger": {
+      "type": "integer"
+    },
+    "ConstInteger": {
+      "const": 2
     },
     "Unknown": {},
     "Reference": {

@@ -32,18 +32,36 @@ class DataQualities(CommonQualities, ABC):
     sdf_type: str | None = None
     nullable: bool = True
     const: Any | None = None
+    default: Any | None = None
+    choices: dict[str, Data] | None = Field(None, alias="sdfChoice")
+
+    def _get_base_schema(self) -> core_schema.CoreSchema:
+        """Implemented by sub-classes."""
+        raise NotImplementedError
 
     def get_pydantic_schema(self) -> core_schema.CoreSchema:
-        raise NotImplementedError
+        """Get the Pydantic schema for this data quality."""
+        if self.const is not None:
+            schema = core_schema.literal_schema([self.const])
+        elif self.choices is not None:
+            schema = core_schema.union_schema(
+                [
+                    (choice.get_pydantic_schema(), name)
+                    for name, choice in self.choices.items()
+                ]
+            )
+        else:
+            schema = self._get_base_schema()
+
+        if self.default is not None:
+            schema = core_schema.with_default_schema(schema, default=self.default)
+        if self.nullable:
+            schema = core_schema.nullable_schema(schema)
+        return schema
 
     def validate(self, input: Any) -> Any:
         """Validate and coerce a value."""
-        if input is None and self.nullable:
-            return input
-        value = SchemaValidator(self.get_pydantic_schema()).validate_python(input)
-        if self.const is not None and value != self.const:
-            raise ValueError(f"Value ({input}) is not {self.const}")
-        return value
+        return SchemaValidator(self.get_pydantic_schema()).validate_python(input)
 
 
 class NumberData(DataQualities):
@@ -65,7 +83,7 @@ class NumberData(DataQualities):
             data.setdefault("type", DataType.NUMBER)
         return data
 
-    def get_pydantic_schema(self) -> core_schema.FloatSchema:
+    def _get_base_schema(self) -> core_schema.FloatSchema:
         return core_schema.float_schema(
             ge=self.minimum,
             le=self.maximum,
@@ -98,7 +116,7 @@ class IntegerData(DataQualities):
             data.setdefault("type", DataType.INTEGER)
         return data
 
-    def get_pydantic_schema(self) -> core_schema.IntSchema:
+    def _get_base_schema(self) -> core_schema.IntSchema:
         return core_schema.int_schema(
             ge=self.minimum,
             le=self.maximum,
@@ -123,7 +141,7 @@ class BooleanData(DataQualities):
             data.setdefault("type", DataType.BOOLEAN)
         return data
 
-    def get_pydantic_schema(self) -> core_schema.BoolSchema:
+    def _get_base_schema(self) -> core_schema.BoolSchema:
         return core_schema.bool_schema()
 
     def validate(self, input: Any) -> bool:
@@ -149,7 +167,11 @@ class StringData(DataQualities):
             data.setdefault("type", DataType.STRING)
         return data
 
-    def get_pydantic_schema(self) -> core_schema.StringSchema | core_schema.BytesSchema:
+    def _get_base_schema(
+        self,
+    ) -> core_schema.StringSchema | core_schema.BytesSchema | core_schema.LiteralSchema:
+        if self.enum is not None:
+            return core_schema.literal_schema(self.enum)
         if self.sdf_type == "byte-string":
             return core_schema.bytes_schema(
                 min_length=self.min_length, max_length=self.max_length
@@ -180,7 +202,7 @@ class ArrayData(DataQualities):
             data.setdefault("type", DataType.ARRAY)
         return data
 
-    def get_pydantic_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
+    def _get_base_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
         if self.unique_items:
             return core_schema.set_schema(
                 self.items.get_pydantic_schema(),
@@ -202,6 +224,7 @@ class ObjectData(DataQualities):
     required: list[str] | None = None
     properties: dict[str, Data] | None = None
     const: dict[str, Any] | None = None
+    default: dict[str, Any] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -210,7 +233,7 @@ class ObjectData(DataQualities):
             data.setdefault("type", DataType.OBJECT)
         return data
 
-    def get_pydantic_schema(self) -> core_schema.TypedDictSchema:
+    def _get_base_schema(self) -> core_schema.TypedDictSchema:
         required = self.required or []
         fields = {
             name: core_schema.typed_dict_field(
@@ -227,7 +250,7 @@ class ObjectData(DataQualities):
 class AnyData(DataQualities):
     type: Literal[None] = None
 
-    def get_pydantic_schema(self) -> core_schema.AnySchema:
+    def _get_base_schema(self) -> core_schema.AnySchema:
         return core_schema.any_schema()
 
 

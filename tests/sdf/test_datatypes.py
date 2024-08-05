@@ -6,7 +6,6 @@ def test_integer_data(test_model: sdf.SDF):
     assert test_model.data["Integer"].minimum == -2
     assert test_model.data["Integer"].maximum == 2
     assert test_model.data["Integer"].multiple_of == 2
-    assert test_model.data["Integer"].const == 2
 
 
 def test_number_data(test_model: sdf.SDF):
