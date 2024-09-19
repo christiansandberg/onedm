@@ -55,3 +55,8 @@ def test_object_data(test_model: sdf.SDF):
 
 def test_unknown_data(test_model: sdf.SDF):
     assert isinstance(test_model.data["Unknown"], sdf.AnyData)
+
+
+def test_serialization_exluding_defaults():
+    integer = sdf.IntegerData()
+    assert "type" in integer.model_dump(exclude_defaults=True)

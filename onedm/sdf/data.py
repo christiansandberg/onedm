@@ -10,7 +10,7 @@ from abc import ABC
 import datetime
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import Field, NonNegativeInt
+from pydantic import Field, NonNegativeInt, field_serializer
 from pydantic_core import SchemaValidator, core_schema
 
 from .common import CommonQualities
@@ -25,6 +25,10 @@ class DataQualities(CommonQualities, ABC):
     const: Any | None = None
     default: Any | None = None
     choices: dict[str, Data] | None = Field(None, alias="sdfChoice")
+
+    @field_serializer("type")
+    def always_include_type(self, type: str, _):
+        return type
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         """Implemented by sub-classes."""
