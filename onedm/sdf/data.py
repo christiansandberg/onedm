@@ -10,7 +10,7 @@ from abc import ABC
 import datetime
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import Field, NonNegativeInt, model_validator
+from pydantic import Field, NonNegativeInt
 from pydantic_core import SchemaValidator, core_schema
 
 from .common import CommonQualities
@@ -50,13 +50,13 @@ class DataQualities(CommonQualities, ABC):
             schema = core_schema.nullable_schema(schema)
         return schema
 
-    def validate(self, input: Any) -> Any:
+    def validate_input(self, input: Any) -> Any:
         """Validate and coerce a value."""
         return SchemaValidator(self.get_pydantic_schema()).validate_python(input)
 
 
 class NumberData(DataQualities):
-    type: Literal["number"]
+    type: Literal["number"] = "number"
     unit: str | None = None
     minimum: float | None = None
     maximum: float | None = None
@@ -66,13 +66,6 @@ class NumberData(DataQualities):
     format: str | None = None
     const: float | None = None
     default: float | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def set_default_type(cls, data: Any):
-        if isinstance(data, dict):
-            data.setdefault("type", "number")
-        return data
 
     def _get_base_schema(self) -> core_schema.FloatSchema | core_schema.DatetimeSchema:
         if self.sdf_type == "unix-time":
@@ -106,12 +99,12 @@ class NumberData(DataQualities):
             multiple_of=self.multiple_of,
         )
 
-    def validate(self, input: Any) -> float:
-        return super().validate(input)
+    def validate_input(self, input: Any) -> float:
+        return super().validate_input(input)
 
 
 class IntegerData(DataQualities):
-    type: Literal["integer"]
+    type: Literal["integer"] = "integer"
     unit: str | None = None
     minimum: int | None = None
     maximum: int | None = None
@@ -122,13 +115,6 @@ class IntegerData(DataQualities):
     const: int | None = None
     default: int | None = None
 
-    @model_validator(mode="before")
-    @classmethod
-    def set_default_type(cls, data: Any):
-        if isinstance(data, dict):
-            data.setdefault("type", "integer")
-        return data
-
     def _get_base_schema(self) -> core_schema.IntSchema:
         return core_schema.int_schema(
             ge=self.minimum,
@@ -138,31 +124,24 @@ class IntegerData(DataQualities):
             multiple_of=self.multiple_of,
         )
 
-    def validate(self, input: Any) -> int:
-        return super().validate(input)
+    def validate_input(self, input: Any) -> int:
+        return super().validate_input(input)
 
 
 class BooleanData(DataQualities):
-    type: Literal["boolean"]
+    type: Literal["boolean"] = "boolean"
     const: bool | None = None
     default: bool | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def set_default_type(cls, data: Any):
-        if isinstance(data, dict):
-            data.setdefault("type", "boolean")
-        return data
 
     def _get_base_schema(self) -> core_schema.BoolSchema:
         return core_schema.bool_schema()
 
-    def validate(self, input: Any) -> bool:
-        return super().validate(input)
+    def validate_input(self, input: Any) -> bool:
+        return super().validate_input(input)
 
 
 class StringData(DataQualities):
-    type: Literal["string"]
+    type: Literal["string"] = "string"
     enum: list[str] | None = None
     min_length: NonNegativeInt = 0
     max_length: NonNegativeInt | None = None
@@ -172,13 +151,6 @@ class StringData(DataQualities):
     choices: dict[str, StringData] | None = Field(None, alias="sdfChoice")
     const: str | None = None
     default: str | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def set_default_type(cls, data: Any):
-        if isinstance(data, dict):
-            data.setdefault("type", "string")
-        return data
 
     def _get_base_schema(
         self,
@@ -205,25 +177,18 @@ class StringData(DataQualities):
             pattern=self.pattern,
         )
 
-    def validate(self, input: Any) -> str | bytes:
-        return super().validate(input)
+    def validate_input(self, input: Any) -> str | bytes:
+        return super().validate_input(input)
 
 
 class ArrayData(DataQualities):
-    type: Literal["array"]
+    type: Literal["array"] = "array"
     min_items: NonNegativeInt = 0
     max_items: NonNegativeInt | None = None
     unique_items: bool = False
     items: Data | None = None
     const: list | None = None
     default: list | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def set_default_type(cls, data: Any):
-        if isinstance(data, dict):
-            data.setdefault("type", "array")
-        return data
 
     def _get_base_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
         if self.unique_items:
@@ -238,23 +203,16 @@ class ArrayData(DataQualities):
             max_length=self.max_items,
         )
 
-    def validate(self, input: Any) -> list | set:
-        return super().validate(input)
+    def validate_input(self, input: Any) -> list | set:
+        return super().validate_input(input)
 
 
 class ObjectData(DataQualities):
-    type: Literal["object"]
+    type: Literal["object"] = "object"
     required: list[str] = Field(default_factory=list)
     properties: dict[str, Data] | None = None
     const: dict[str, Any] | None = None
     default: dict[str, Any] | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def set_default_type(cls, data: Any):
-        if isinstance(data, dict):
-            data.setdefault("type", "object")
-        return data
 
     def _get_base_schema(self) -> core_schema.TypedDictSchema:
         required = self.required or []
@@ -266,8 +224,8 @@ class ObjectData(DataQualities):
         }
         return core_schema.typed_dict_schema(fields)
 
-    def validate(self, input: Any) -> dict:
-        return super().validate(input)
+    def validate_input(self, input: Any) -> dict:
+        return super().validate_input(input)
 
 
 class AnyData(DataQualities):

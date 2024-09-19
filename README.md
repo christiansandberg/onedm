@@ -43,13 +43,13 @@ Loading an existing SDF document:
 >>> doc.properties["IntegerProperty"] 
 IntegerProperty(observable=True, readable=True, writable=True, label='Example integer', description=None, ref=None, required=[], type=<DataType.INTEGER: 'integer'>, sdf_type=None, nullable=True, const=2, unit=None, minimum=-2, maximum=2, exclusive_minimum=None, exclusive_maximum=None, multiple_of=2, format=None, choices=None, default=None)
 
->>> doc.data["Integer"].validate(3)
+>>> doc.data["Integer"].validate_input(3)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
-  File "onedm\sdf\data.py", line 129, in validate
-    return super().validate(input)
+  File "onedm\sdf\data.py", line 129, in validate_input
+    return super().validate_input(input)
            ^^^^^^^^^^^^^^^^^^^^^^^
-  File "onedm\sdf\data.py", line 64, in validate
+  File "onedm\sdf\data.py", line 64, in validate_input
     return SchemaValidator(self.get_pydantic_schema()).validate_python(input)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 pydantic_core._pydantic_core.ValidationError: 1 validation error for constrained-int

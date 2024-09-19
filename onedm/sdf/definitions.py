@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Annotated, Literal, Union
+from typing import Annotated, Literal, Union, Tuple
 
 from pydantic import Field, NonNegativeInt
 
@@ -20,49 +20,49 @@ class NumberProperty(NumberData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
 class IntegerProperty(IntegerData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
 class BooleanProperty(BooleanData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
 class StringProperty(StringData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
 class ArrayProperty(ArrayData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
 class ObjectProperty(ObjectData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
 class AnyProperty(AnyData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
 Property = Union[
