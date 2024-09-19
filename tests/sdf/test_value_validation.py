@@ -2,13 +2,14 @@ import pytest
 from onedm import sdf
 
 
-def test_integer_validation(test_model: sdf.SDF):
-    assert test_model.data["Integer"].validate(2) == 2
+def test_integer_validation():
+    integer = sdf.IntegerData(maximum=2)
+    assert integer.validate(2) == 2
     with pytest.raises(ValueError):
-        test_model.data["Integer"].validate(True)
+        integer.validate(1.5)
     # Out of range
     with pytest.raises(ValueError):
-        test_model.data["Integer"].validate(3)
+        integer.validate(3)
 
 
 def test_number_validation(test_model: sdf.SDF):
@@ -40,9 +41,12 @@ def test_string_validation(test_model: sdf.SDF):
         test_model.data["Number"].validate(["0123456789"])
 
 
-def test_nullable_validation(test_model: sdf.SDF):
-    assert test_model.data["NullableInteger"].validate(None) == None
+def test_nullable_validation():
+    nullable_integer = sdf.IntegerData(nullable=True)
+    assert nullable_integer.validate(None) == None
 
-    # Not nullable
+
+def test_non_nullable_validation():
+    integer = sdf.IntegerData(nullable=False)
     with pytest.raises(ValueError):
-        test_model.data["Integer"].validate(None)
+        integer.validate(None)

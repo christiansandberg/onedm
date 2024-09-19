@@ -7,7 +7,7 @@ types for correct validation and type hints.
 from __future__ import annotations
 
 from abc import ABC
-from enum import Enum
+import datetime
 from typing import Annotated, Any, Literal, Union
 
 from pydantic import Field, NonNegativeInt, model_validator
@@ -16,20 +16,11 @@ from pydantic_core import SchemaValidator, core_schema
 from .common import CommonQualities
 
 
-class DataType(str, Enum):
-    BOOLEAN = "boolean"
-    NUMBER = "number"
-    INTEGER = "integer"
-    STRING = "string"
-    OBJECT = "object"
-    ARRAY = "array"
-
-
 class DataQualities(CommonQualities, ABC):
     """Base class for all data qualities."""
 
-    type: DataType
-    sdf_type: str | None = None
+    type: Literal["boolean", "number", "integer", "string", "object", "array"]
+    sdf_type: str | None = Field(None, pattern=r"^[a-z][\-a-z0-9]*$")
     nullable: bool = True
     const: Any | None = None
     default: Any | None = None
@@ -65,7 +56,7 @@ class DataQualities(CommonQualities, ABC):
 
 
 class NumberData(DataQualities):
-    type: Literal[DataType.NUMBER]
+    type: Literal["number"]
     unit: str | None = None
     minimum: float | None = None
     maximum: float | None = None
@@ -80,10 +71,33 @@ class NumberData(DataQualities):
     @classmethod
     def set_default_type(cls, data: Any):
         if isinstance(data, dict):
-            data.setdefault("type", DataType.NUMBER)
+            data.setdefault("type", "number")
         return data
 
-    def _get_base_schema(self) -> core_schema.FloatSchema:
+    def _get_base_schema(self) -> core_schema.FloatSchema | core_schema.DatetimeSchema:
+        if self.sdf_type == "unix-time":
+            return core_schema.datetime_schema(
+                ge=(
+                    datetime.datetime.fromtimestamp(self.minimum)
+                    if self.minimum is not None
+                    else None
+                ),
+                le=(
+                    datetime.datetime.fromtimestamp(self.maximum)
+                    if self.maximum is not None
+                    else None
+                ),
+                gt=(
+                    datetime.datetime.fromtimestamp(self.exclusive_minimum)
+                    if self.exclusive_minimum is not None
+                    else None
+                ),
+                lt=(
+                    datetime.datetime.fromtimestamp(self.exclusive_maximum)
+                    if self.exclusive_maximum is not None
+                    else None
+                ),
+            )
         return core_schema.float_schema(
             ge=self.minimum,
             le=self.maximum,
@@ -92,19 +106,18 @@ class NumberData(DataQualities):
             multiple_of=self.multiple_of,
         )
 
-    def validate(self, input: Any) -> int:
+    def validate(self, input: Any) -> float:
         return super().validate(input)
 
 
 class IntegerData(DataQualities):
-    type: Literal[DataType.INTEGER]
+    type: Literal["integer"]
     unit: str | None = None
     minimum: int | None = None
     maximum: int | None = None
     exclusive_minimum: int | None = None
     exclusive_maximum: int | None = None
     multiple_of: int | None = None
-    format: str | None = None
     choices: dict[str, IntegerData] | None = Field(None, alias="sdfChoice")
     const: int | None = None
     default: int | None = None
@@ -113,7 +126,7 @@ class IntegerData(DataQualities):
     @classmethod
     def set_default_type(cls, data: Any):
         if isinstance(data, dict):
-            data.setdefault("type", DataType.INTEGER)
+            data.setdefault("type", "integer")
         return data
 
     def _get_base_schema(self) -> core_schema.IntSchema:
@@ -130,7 +143,7 @@ class IntegerData(DataQualities):
 
 
 class BooleanData(DataQualities):
-    type: Literal[DataType.BOOLEAN]
+    type: Literal["boolean"]
     const: bool | None = None
     default: bool | None = None
 
@@ -138,7 +151,7 @@ class BooleanData(DataQualities):
     @classmethod
     def set_default_type(cls, data: Any):
         if isinstance(data, dict):
-            data.setdefault("type", DataType.BOOLEAN)
+            data.setdefault("type", "boolean")
         return data
 
     def _get_base_schema(self) -> core_schema.BoolSchema:
@@ -149,7 +162,7 @@ class BooleanData(DataQualities):
 
 
 class StringData(DataQualities):
-    type: Literal[DataType.STRING]
+    type: Literal["string"]
     enum: list[str] | None = None
     min_length: NonNegativeInt = 0
     max_length: NonNegativeInt | None = None
@@ -164,7 +177,7 @@ class StringData(DataQualities):
     @classmethod
     def set_default_type(cls, data: Any):
         if isinstance(data, dict):
-            data.setdefault("type", DataType.STRING)
+            data.setdefault("type", "string")
         return data
 
     def _get_base_schema(
@@ -176,6 +189,16 @@ class StringData(DataQualities):
             return core_schema.bytes_schema(
                 min_length=self.min_length, max_length=self.max_length
             )
+        if self.format == "uuid":
+            return core_schema.uuid_schema()
+        if self.format == "date-time":
+            return core_schema.datetime_schema()
+        if self.format == "date":
+            return core_schema.date_schema()
+        if self.format == "time":
+            return core_schema.time_schema()
+        if self.format == "uri":
+            return core_schema.url_schema()
         return core_schema.str_schema(
             min_length=self.min_length,
             max_length=self.max_length,
@@ -187,7 +210,7 @@ class StringData(DataQualities):
 
 
 class ArrayData(DataQualities):
-    type: Literal[DataType.ARRAY]
+    type: Literal["array"]
     min_items: NonNegativeInt = 0
     max_items: NonNegativeInt | None = None
     unique_items: bool = False
@@ -199,7 +222,7 @@ class ArrayData(DataQualities):
     @classmethod
     def set_default_type(cls, data: Any):
         if isinstance(data, dict):
-            data.setdefault("type", DataType.ARRAY)
+            data.setdefault("type", "array")
         return data
 
     def _get_base_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
@@ -220,8 +243,8 @@ class ArrayData(DataQualities):
 
 
 class ObjectData(DataQualities):
-    type: Literal[DataType.OBJECT]
-    required: list[str] | None = None
+    type: Literal["object"]
+    required: list[str] = Field(default_factory=list)
     properties: dict[str, Data] | None = None
     const: dict[str, Any] | None = None
     default: dict[str, Any] | None = None
@@ -230,7 +253,7 @@ class ObjectData(DataQualities):
     @classmethod
     def set_default_type(cls, data: Any):
         if isinstance(data, dict):
-            data.setdefault("type", DataType.OBJECT)
+            data.setdefault("type", "object")
         return data
 
     def _get_base_schema(self) -> core_schema.TypedDictSchema:

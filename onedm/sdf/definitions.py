@@ -1,7 +1,7 @@
 from __future__ import annotations
-from typing import Annotated, Union
+from typing import Annotated, Literal, Union
 
-from pydantic import Field
+from pydantic import Field, NonNegativeInt
 
 from .common import CommonQualities
 from .data import (
@@ -16,38 +16,53 @@ from .data import (
 )
 
 
-class PropertyCommon:
+class NumberProperty(NumberData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
+    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
-class NumberProperty(NumberData, PropertyCommon):
-    pass
+class IntegerProperty(IntegerData):
+    observable: bool = True
+    readable: bool = True
+    writable: bool = True
+    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
-class IntegerProperty(IntegerData, PropertyCommon):
-    pass
+class BooleanProperty(BooleanData):
+    observable: bool = True
+    readable: bool = True
+    writable: bool = True
+    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
-class BooleanProperty(BooleanData, PropertyCommon):
-    pass
+class StringProperty(StringData):
+    observable: bool = True
+    readable: bool = True
+    writable: bool = True
+    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
-class StringProperty(StringData, PropertyCommon):
-    pass
+class ArrayProperty(ArrayData):
+    observable: bool = True
+    readable: bool = True
+    writable: bool = True
+    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
-class ArrayProperty(ArrayData, PropertyCommon):
-    pass
+class ObjectProperty(ObjectData):
+    observable: bool = True
+    readable: bool = True
+    writable: bool = True
+    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
-class ObjectProperty(ObjectData, PropertyCommon):
-    pass
-
-
-class AnyProperty(AnyData, PropertyCommon):
-    pass
+class AnyProperty(AnyData):
+    observable: bool = True
+    readable: bool = True
+    writable: bool = True
+    required: list[Literal[True]] | None = Field(default=None, alias="sdfRequired")
 
 
 Property = Union[
@@ -78,9 +93,10 @@ class Object(CommonQualities):
     actions: dict[str, Action] = Field(default_factory=dict, alias="sdfAction")
     events: dict[str, Event] = Field(default_factory=dict, alias="sdfEvent")
     data: dict[str, Data] = Field(default_factory=dict, alias="sdfData")
+    required: list[str] = Field(default_factory=list, alias="sdfRequired")
     # If array of objects
-    min_items: int | None = None
-    max_items: int | None = None
+    min_items: NonNegativeInt | None = None
+    max_items: NonNegativeInt | None = None
 
 
 class Thing(CommonQualities):
@@ -90,6 +106,7 @@ class Thing(CommonQualities):
     actions: dict[str, Action] = Field(default_factory=dict, alias="sdfAction")
     events: dict[str, Event] = Field(default_factory=dict, alias="sdfEvent")
     data: dict[str, Data] = Field(default_factory=dict, alias="sdfData")
+    required: list[str] = Field(default_factory=list, alias="sdfRequired")
     # If array of things
-    min_items: int | None = None
-    max_items: int | None = None
+    min_items: NonNegativeInt | None = None
+    max_items: NonNegativeInt | None = None
