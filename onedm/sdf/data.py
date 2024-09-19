@@ -26,10 +26,6 @@ class DataQualities(CommonQualities, ABC):
     default: Any | None = None
     choices: dict[str, Data] | None = Field(None, alias="sdfChoice")
 
-    @field_serializer("type")
-    def always_include_type(self, type: str, _):
-        return type
-
     def _get_base_schema(self) -> core_schema.CoreSchema:
         """Implemented by sub-classes."""
         raise NotImplementedError
@@ -70,6 +66,10 @@ class NumberData(DataQualities):
     format: str | None = None
     const: float | None = None
     default: float | None = None
+
+    @field_serializer("type")
+    def always_include_type(self, type: str, _):
+        return type
 
     def _get_base_schema(self) -> core_schema.FloatSchema | core_schema.DatetimeSchema:
         if self.sdf_type == "unix-time":
@@ -119,6 +119,10 @@ class IntegerData(DataQualities):
     const: int | None = None
     default: int | None = None
 
+    @field_serializer("type")
+    def always_include_type(self, type: str, _):
+        return type
+
     def _get_base_schema(self) -> core_schema.IntSchema:
         return core_schema.int_schema(
             ge=self.minimum,
@@ -136,6 +140,10 @@ class BooleanData(DataQualities):
     type: Literal["boolean"] = "boolean"
     const: bool | None = None
     default: bool | None = None
+
+    @field_serializer("type")
+    def always_include_type(self, type: str, _):
+        return type
 
     def _get_base_schema(self) -> core_schema.BoolSchema:
         return core_schema.bool_schema()
@@ -155,6 +163,10 @@ class StringData(DataQualities):
     choices: dict[str, StringData] | None = Field(None, alias="sdfChoice")
     const: str | None = None
     default: str | None = None
+
+    @field_serializer("type")
+    def always_include_type(self, type: str, _):
+        return type
 
     def _get_base_schema(
         self,
@@ -194,6 +206,10 @@ class ArrayData(DataQualities):
     const: list | None = None
     default: list | None = None
 
+    @field_serializer("type")
+    def always_include_type(self, type: str, _):
+        return type
+
     def _get_base_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
         if self.unique_items:
             return core_schema.set_schema(
@@ -217,6 +233,10 @@ class ObjectData(DataQualities):
     properties: dict[str, Data] | None = None
     const: dict[str, Any] | None = None
     default: dict[str, Any] | None = None
+
+    @field_serializer("type")
+    def always_include_type(self, type: str, _):
+        return type
 
     def _get_base_schema(self) -> core_schema.TypedDictSchema:
         required = self.required or []
