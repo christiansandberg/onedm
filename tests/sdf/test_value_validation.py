@@ -1,3 +1,4 @@
+import enum
 import pytest
 from onedm import sdf
 
@@ -10,6 +11,29 @@ def test_integer_validation():
     # Out of range
     with pytest.raises(ValueError):
         integer.validate_input(3)
+
+
+def test_string_to_int_conversion():
+    assert sdf.IntegerData().validate_input("2") == 2
+
+
+def test_int_enum():
+    integer = sdf.IntegerData(
+        sdfChoice={"ONE": sdf.IntegerData(const=1), "TWO": sdf.IntegerData(const=2)}
+    )
+    value = integer.validate_input(1)
+    assert isinstance(value, enum.IntEnum)
+    assert value.name == "ONE"
+    assert value == 1
+
+
+def test_int_enum_non_const_value():
+    integer = sdf.IntegerData(
+        sdfChoice={"ONE": sdf.IntegerData(const=1), "OTHER": sdf.IntegerData(minimum=2, maximum=5)}
+    )
+    value = integer.validate_input(2)
+    assert isinstance(value, int)
+    assert value == 2
 
 
 def test_number_validation(test_model: sdf.SDF):

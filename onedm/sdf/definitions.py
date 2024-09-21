@@ -20,49 +20,49 @@ class NumberProperty(NumberData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 class IntegerProperty(IntegerData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 class BooleanProperty(BooleanData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 class StringProperty(StringData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 class ArrayProperty(ArrayData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 class ObjectProperty(ObjectData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 class AnyProperty(AnyData):
     observable: bool = True
     readable: bool = True
     writable: bool = True
-    required: Tuple[Literal[True]] | None = Field(default=None, alias="sdfRequired")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 Property = Union[

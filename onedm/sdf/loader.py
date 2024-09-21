@@ -19,7 +19,7 @@ class SDFLoader:
 
     def __init__(self) -> None:
         self.url = ""
-        self.root = {}
+        self.root: dict[str, Any] = {}
         self._namespaces: dict[str, SDFLoader] = {}
 
     def load_file(self, path):

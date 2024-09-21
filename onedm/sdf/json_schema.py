@@ -3,7 +3,7 @@ from pydantic import TypeAdapter
 from .data import Data
 
 
-DataModel = TypeAdapter(Data)
+DataModel = TypeAdapter[Data](Data)
 
 
 def from_json_schema(definition: dict) -> Data:

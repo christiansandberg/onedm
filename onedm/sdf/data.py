@@ -8,7 +8,8 @@ from __future__ import annotations
 
 from abc import ABC
 import datetime
-from typing import Annotated, Any, Literal, Union
+import enum
+from typing import Annotated, Any, Literal, Type, Union
 
 from pydantic import Field, NonNegativeInt, field_serializer
 from pydantic_core import SchemaValidator, core_schema
@@ -19,12 +20,12 @@ from .common import CommonQualities
 class DataQualities(CommonQualities, ABC):
     """Base class for all data qualities."""
 
-    type: Literal["boolean", "number", "integer", "string", "object", "array"]
-    sdf_type: str | None = Field(None, pattern=r"^[a-z][\-a-z0-9]*$")
+    type: Literal["boolean", "number", "integer", "string", "object", "array", None]
+    sdf_type: Annotated[str, Field(pattern=r"^[a-z][\-a-z0-9]*$")] | None = None
     nullable: bool = True
     const: Any | None = None
     default: Any | None = None
-    choices: dict[str, Data] | None = Field(None, alias="sdfChoice")
+    choices: Annotated[dict[str, Data] | None, Field(alias="sdfChoice")] = None
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         """Implemented by sub-classes."""
@@ -32,6 +33,8 @@ class DataQualities(CommonQualities, ABC):
 
     def get_pydantic_schema(self) -> core_schema.CoreSchema:
         """Get the Pydantic schema for this data quality."""
+        schema: core_schema.CoreSchema
+
         if self.const is not None:
             schema = core_schema.literal_schema([self.const])
         elif self.choices is not None:
@@ -71,7 +74,7 @@ class NumberData(DataQualities):
     def always_include_type(self, type: str, _):
         return type
 
-    def _get_base_schema(self) -> core_schema.FloatSchema | core_schema.DatetimeSchema:
+    def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.sdf_type == "unix-time":
             return core_schema.datetime_schema(
                 ge=(
@@ -103,9 +106,6 @@ class NumberData(DataQualities):
             multiple_of=self.multiple_of,
         )
 
-    def validate_input(self, input: Any) -> float:
-        return super().validate_input(input)
-
 
 class IntegerData(DataQualities):
     type: Literal["integer"] = "integer"
@@ -115,7 +115,8 @@ class IntegerData(DataQualities):
     exclusive_minimum: int | None = None
     exclusive_maximum: int | None = None
     multiple_of: int | None = None
-    choices: dict[str, IntegerData] | None = Field(None, alias="sdfChoice")
+    enum: list[int] | None = None
+    choices: Annotated[dict[str, IntegerData] | None, Field(alias="sdfChoice")] = None  # type: ignore[assignment]
     const: int | None = None
     default: int | None = None
 
@@ -132,14 +133,34 @@ class IntegerData(DataQualities):
             multiple_of=self.multiple_of,
         )
 
-    def validate_input(self, input: Any) -> int:
-        return super().validate_input(input)
+    def to_enum(self) -> enum.EnumMeta | None:
+        if self.choices is None:
+            return None
+        return enum.IntEnum(
+            self.label or "Enum",
+            {
+                name: choice.const
+                for name, choice in self.choices.items()
+                if choice.const is not None
+            },
+        )
+
+    def validate_input(self, input: Any) -> enum.IntEnum | int:
+        value = SchemaValidator(self.get_pydantic_schema()).validate_python(input)
+        # Convert to enum.IntEnum if possible
+        if self.choices is not None:
+            try:
+                value = self.to_enum()(value)
+            except ValueError:
+                pass
+        return value
 
 
 class BooleanData(DataQualities):
     type: Literal["boolean"] = "boolean"
     const: bool | None = None
     default: bool | None = None
+    choices: Annotated[dict[str, BooleanData] | None, Field(alias="sdfChoice")] = None  # type: ignore[assignment]
 
     @field_serializer("type")
     def always_include_type(self, type: str, _):
@@ -147,9 +168,6 @@ class BooleanData(DataQualities):
 
     def _get_base_schema(self) -> core_schema.BoolSchema:
         return core_schema.bool_schema()
-
-    def validate_input(self, input: Any) -> bool:
-        return super().validate_input(input)
 
 
 class StringData(DataQualities):
@@ -160,7 +178,7 @@ class StringData(DataQualities):
     pattern: str | None = None
     format: str | None = None
     content_format: str | None = None
-    choices: dict[str, StringData] | None = Field(None, alias="sdfChoice")
+    choices: Annotated[dict[str, StringData] | None, Field(alias="sdfChoice")] = None  # type: ignore[assignment]
     const: str | None = None
     default: str | None = None
 
@@ -168,12 +186,10 @@ class StringData(DataQualities):
     def always_include_type(self, type: str, _):
         return type
 
-    def _get_base_schema(
-        self,
-    ) -> core_schema.StringSchema | core_schema.BytesSchema | core_schema.LiteralSchema:
+    def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.enum is not None:
             return core_schema.literal_schema(self.enum)
-        if self.sdf_type == "byte-string":
+        if self.sdf_type == "byte-string" or self.format == "bytes":
             return core_schema.bytes_schema(
                 min_length=self.min_length, max_length=self.max_length
             )
@@ -193,16 +209,13 @@ class StringData(DataQualities):
             pattern=self.pattern,
         )
 
-    def validate_input(self, input: Any) -> str | bytes:
-        return super().validate_input(input)
-
 
 class ArrayData(DataQualities):
     type: Literal["array"] = "array"
+    items: Data
     min_items: NonNegativeInt = 0
     max_items: NonNegativeInt | None = None
     unique_items: bool = False
-    items: Data | None = None
     const: list | None = None
     default: list | None = None
 
@@ -223,14 +236,11 @@ class ArrayData(DataQualities):
             max_length=self.max_items,
         )
 
-    def validate_input(self, input: Any) -> list | set:
-        return super().validate_input(input)
-
 
 class ObjectData(DataQualities):
     type: Literal["object"] = "object"
+    properties: dict[str, Data]
     required: list[str] = Field(default_factory=list)
-    properties: dict[str, Data] | None = None
     const: dict[str, Any] | None = None
     default: dict[str, Any] | None = None
 
@@ -247,9 +257,6 @@ class ObjectData(DataQualities):
             for name, property in self.properties.items()
         }
         return core_schema.typed_dict_schema(fields)
-
-    def validate_input(self, input: Any) -> dict:
-        return super().validate_input(input)
 
 
 class AnyData(DataQualities):

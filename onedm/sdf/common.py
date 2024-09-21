@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Annotated
 
 from pydantic import BaseModel, ConfigDict, Field
 from pydantic.alias_generators import to_camel
@@ -9,7 +9,7 @@ class CommonQualities(BaseModel):
 
     label: str | None = None
     description: str | None = None
-    ref: str | None = Field(None, alias="sdfRef")
+    ref: Annotated[str | None, Field(alias="sdfRef")] = None
 
     def get_extra(self) -> dict[str, Any]:
-        return self.__pydantic_extra__
+        return self.__pydantic_extra__ if self.__pydantic_extra__ is not None else {}

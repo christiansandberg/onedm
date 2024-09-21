@@ -26,4 +26,4 @@ def test_required_as_prop():
             },
         }
     )
-    assert test.properties["prop1"].required
+    assert test.properties["prop1"].sdf_required

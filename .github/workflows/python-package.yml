@@ -28,11 +28,10 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install -e .
-        python -m pip install flake8 pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
-      run: |
-        flake8 onedm
+      run: flake8 onedm
+    - name: Lint with mypy
+      run: mypy onedm
     - name: Test with pytest
-      run: |
-        pytest
+      run: pytest
