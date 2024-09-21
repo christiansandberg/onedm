@@ -2,7 +2,6 @@ from pydantic import TypeAdapter
 
 from .data import Data
 
-
 DataModel = TypeAdapter[Data](Data)
 
 

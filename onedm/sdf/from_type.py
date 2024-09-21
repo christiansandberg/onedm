@@ -5,7 +5,7 @@ from typing import Type
 
 from pydantic import TypeAdapter
 
-from .data import Data, IntegerData, StringData
+from .data import Data, IntegerData
 from .json_schema import from_json_schema
 
 

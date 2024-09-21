@@ -33,5 +33,7 @@ jobs:
       run: flake8 onedm
     - name: Lint with mypy
       run: mypy onedm
+    - name: Check formatting
+      run: black --check onedm
     - name: Test with pytest
-      run: pytest
+      run: pytest -v

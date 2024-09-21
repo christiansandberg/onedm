@@ -6,10 +6,10 @@ types for correct validation and type hints.
 
 from __future__ import annotations
 
-from abc import ABC
 import datetime
-import enum
-from typing import Annotated, Any, Literal, Type, Union
+from abc import ABC
+from enum import EnumType, IntEnum
+from typing import Annotated, Any, Literal, Union
 
 from pydantic import Field, NonNegativeInt, field_serializer
 from pydantic_core import SchemaValidator, core_schema
@@ -116,9 +116,12 @@ class IntegerData(DataQualities):
     exclusive_maximum: int | None = None
     multiple_of: int | None = None
     enum: list[int] | None = None
-    choices: Annotated[dict[str, IntegerData] | None, Field(alias="sdfChoice")] = None  # type: ignore[assignment]
+    choices: Annotated[dict[str, IntegerData] | None, Field(alias="sdfChoice")] = (
+        None  # type: ignore[assignment]
+    )
     const: int | None = None
     default: int | None = None
+    _enum = None
 
     @field_serializer("type")
     def always_include_type(self, type: str, _):
@@ -133,25 +136,32 @@ class IntegerData(DataQualities):
             multiple_of=self.multiple_of,
         )
 
-    def to_enum(self) -> enum.EnumMeta | None:
-        if self.choices is None:
-            return None
-        return enum.IntEnum(
-            self.label or "Enum",
-            {
-                name: choice.const
-                for name, choice in self.choices.items()
-                if choice.const is not None
-            },
-        )
+    def to_enum(self) -> EnumType | None:
+        """Turn sdfChoice into a Python enumeration
 
-    def validate_input(self, input: Any) -> enum.IntEnum | int:
-        value = SchemaValidator(self.get_pydantic_schema()).validate_python(input)
+        Only choices with the const attribute set will be included.
+        """
+        if self._enum is None:
+            if self.choices is None:
+                return None
+            self._enum = IntEnum(  # type: ignore
+                self.label or "Enum",
+                {
+                    name: choice.const
+                    for name, choice in self.choices.items()
+                    if choice.const is not None
+                },
+            )
+        return self._enum
+
+    def validate_input(self, input: Any) -> IntEnum | int:
+        value = super().validate_input(input)
         # Convert to enum.IntEnum if possible
-        if self.choices is not None:
+        if enum_cls := self.to_enum():
             try:
-                value = self.to_enum()(value)
+                value = enum_cls(value)
             except ValueError:
+                # Value is valid but not a specific enum value
                 pass
         return value
 
@@ -160,7 +170,9 @@ class BooleanData(DataQualities):
     type: Literal["boolean"] = "boolean"
     const: bool | None = None
     default: bool | None = None
-    choices: Annotated[dict[str, BooleanData] | None, Field(alias="sdfChoice")] = None  # type: ignore[assignment]
+    choices: Annotated[dict[str, BooleanData] | None, Field(alias="sdfChoice")] = (
+        None  # type: ignore[assignment]
+    )
 
     @field_serializer("type")
     def always_include_type(self, type: str, _):
@@ -178,7 +190,9 @@ class StringData(DataQualities):
     pattern: str | None = None
     format: str | None = None
     content_format: str | None = None
-    choices: Annotated[dict[str, StringData] | None, Field(alias="sdfChoice")] = None  # type: ignore[assignment]
+    choices: Annotated[dict[str, StringData] | None, Field(alias="sdfChoice")] = (
+        None  # type: ignore[assignment]
+    )
     const: str | None = None
     default: str | None = None
 
