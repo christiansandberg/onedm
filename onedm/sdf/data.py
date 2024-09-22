@@ -9,6 +9,7 @@ from __future__ import annotations
 import datetime
 from abc import ABC
 from enum import EnumMeta, IntEnum
+from re import Pattern
 from typing import Annotated, Any, Literal, Union
 
 from pydantic import Field, NonNegativeInt, field_serializer
@@ -187,7 +188,7 @@ class StringData(DataQualities):
     enum: list[str] | None = None
     min_length: NonNegativeInt = 0
     max_length: NonNegativeInt | None = None
-    pattern: str | None = None
+    pattern: str | Pattern[str] | None = None
     format: str | None = None
     content_format: str | None = None
     choices: Annotated[dict[str, StringData] | None, Field(alias="sdfChoice")] = (
@@ -226,7 +227,7 @@ class StringData(DataQualities):
 
 class ArrayData(DataQualities):
     type: Literal["array"] = "array"
-    items: Data
+    items: Data | None = None
     min_items: NonNegativeInt = 0
     max_items: NonNegativeInt | None = None
     unique_items: bool = False
@@ -240,12 +241,12 @@ class ArrayData(DataQualities):
     def _get_base_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
         if self.unique_items:
             return core_schema.set_schema(
-                self.items.get_pydantic_schema(),
+                self.items.get_pydantic_schema() if self.items is not None else None,
                 min_length=self.min_items,
                 max_length=self.max_items,
             )
         return core_schema.list_schema(
-            self.items.get_pydantic_schema(),
+            self.items.get_pydantic_schema() if self.items is not None else None,
             min_length=self.min_items,
             max_length=self.max_items,
         )
@@ -253,7 +254,7 @@ class ArrayData(DataQualities):
 
 class ObjectData(DataQualities):
     type: Literal["object"] = "object"
-    properties: dict[str, Data]
+    properties: dict[str, Data] | None = None
     required: list[str] = Field(default_factory=list)
     const: dict[str, Any] | None = None
     default: dict[str, Any] | None = None
@@ -262,7 +263,9 @@ class ObjectData(DataQualities):
     def always_include_type(self, type: str, _):
         return type
 
-    def _get_base_schema(self) -> core_schema.TypedDictSchema:
+    def _get_base_schema(self) -> core_schema.CoreSchema:
+        if self.properties is None:
+            return core_schema.dict_schema()
         required = self.required or []
         fields = {
             name: core_schema.typed_dict_field(
