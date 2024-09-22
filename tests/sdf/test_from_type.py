@@ -72,7 +72,7 @@ def test_int_enum():
 
 
 def test_str_enum():
-    class MyEnum(enum.StrEnum):
+    class MyEnum(str, enum.Enum):
         ONE = "one"
         TWO = "two"
 
