@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import datetime
 from abc import ABC
-from enum import EnumType, IntEnum
+from enum import EnumMeta, IntEnum
 from typing import Annotated, Any, Literal, Union
 
 from pydantic import Field, NonNegativeInt, field_serializer
@@ -136,7 +136,7 @@ class IntegerData(DataQualities):
             multiple_of=self.multiple_of,
         )
 
-    def to_enum(self) -> EnumType | None:
+    def to_enum(self) -> EnumMeta | None:
         """Turn sdfChoice into a Python enumeration
 
         Only choices with the const attribute set will be included.
