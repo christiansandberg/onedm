@@ -161,3 +161,7 @@ def test_label():
     data = data_from_type(Annotated[int, Field(title="Test title")])
 
     assert data.label == "Test title"
+
+
+def test_none():
+    assert data_from_type(None) is None
