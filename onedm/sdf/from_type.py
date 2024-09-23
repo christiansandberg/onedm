@@ -22,7 +22,13 @@ def data_from_type(type_: Type) -> data.Data | None:
 def data_from_schema(schema: core_schema.CoreSchema) -> data.Data:
     schema_type = schema["type"]
     data_type: data.Data
-    if schema_type == "int":
+    if schema_type == "nullable":
+        data_type = data_from_nullable_schema(schema)  # type: ignore
+    elif schema_type == "default":
+        data_type = data_from_default_schema(schema)  # type: ignore
+    elif schema_type == "any":
+        data_type = data_from_any_schema(schema)  # type: ignore
+    elif schema_type == "int":
         data_type = data_from_int_schema(schema)  # type: ignore
     elif schema_type == "float":
         data_type = data_from_float_schema(schema)  # type: ignore
@@ -50,12 +56,6 @@ def data_from_schema(schema: core_schema.CoreSchema) -> data.Data:
         data_type = data_from_enum_schema(schema)  # type: ignore
     elif schema_type == "literal":
         data_type = data_from_literal_schema(schema)  # type: ignore
-    elif schema_type == "any":
-        data_type = data_from_any_schema(schema)  # type: ignore
-    elif schema_type == "nullable":
-        data_type = data_from_nullable_schema(schema)  # type: ignore
-    elif schema_type == "default":
-        data_type = data_from_default_schema(schema)  # type: ignore
     elif schema_type == "datetime":
         data_type = data_from_datetime_schema(schema)  # type: ignore
     else:
@@ -82,19 +82,21 @@ def data_from_default_schema(schema: core_schema.WithDefaultSchema):
 
 
 def data_from_model_schema(schema: core_schema.ModelSchema):
-    data_type = data_from_schema(schema["schema"])
-    return data_type
+    return data_from_schema(schema["schema"])
 
 
 def data_from_model_fields_schema(schema: core_schema.ModelFieldsSchema):
     return data.ObjectData(
         label=schema.get("model_name"),
         properties={
-            prop_schema.get("serialization_alias", name): data_from_schema(
-                prop_schema["schema"]
-            )
-            for name, prop_schema in schema["fields"].items()
+            field.get("serialization_alias", name): data_from_schema(field["schema"])
+            for name, field in schema["fields"].items()
         },
+        required=[
+            field.get("serialization_alias", name)
+            for name, field in schema["fields"].items()
+            if field["schema"]["type"] != "default"
+        ],
         nullable=False,
     )
 
@@ -209,15 +211,9 @@ def data_from_bytes_schema(schema: core_schema.BytesSchema):
 def data_from_literal_schema(schema: core_schema.LiteralSchema):
     choices = schema["expected"]
     if len(choices) == 1:
-        return data.AnyData(
-            const=choices[0],
-            nullable=False,
-        )
+        return data.AnyData(const=choices[0], nullable=False)
     if all(isinstance(choice, str) for choice in choices):
-        return data.StringData(
-            enum=choices,
-            nullable=False,
-        )
+        return data.StringData(enum=choices, nullable=False)
     raise NotImplementedError(f"Literal with {choices} not supported")
 
 

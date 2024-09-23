@@ -126,19 +126,25 @@ def test_set():
 def test_model():
     class TestModel(BaseModel):
         with_default: int = 2
-        with_alias: Annotated[int, Field(alias="withAlias")]
+        with_alias: Annotated[int, Field(alias="withAlias")] = 0
+        optional: float | None = None
+        required: bool | None
 
     data = data_from_type(TestModel)
 
     assert isinstance(data, sdf.ObjectData)
     assert data.label == "TestModel"
     assert not data.nullable
+    assert data.required == ["required"]
 
     assert isinstance(data.properties["with_default"], sdf.IntegerData)
     assert data.properties["with_default"].default == 2
     assert not data.properties["with_default"].nullable
 
     assert "withAlias" in data.properties
+
+    assert data.properties["required"].nullable
+    assert data.properties["optional"].nullable
 
 
 def test_dataclass():

@@ -116,7 +116,6 @@ class IntegerData(DataQualities):
     exclusive_minimum: int | None = None
     exclusive_maximum: int | None = None
     multiple_of: int | None = None
-    enum: list[int] | None = None
     choices: Annotated[dict[str, IntegerData] | None, Field(alias="sdfChoice")] = (
         None  # type: ignore[assignment]
     )
@@ -266,14 +265,14 @@ class ObjectData(DataQualities):
     def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.properties is None:
             return core_schema.dict_schema()
-        required = self.required or []
-        fields = {
-            name: core_schema.typed_dict_field(
-                property.get_pydantic_schema(), required=name in required
-            )
-            for name, property in self.properties.items()
-        }
-        return core_schema.typed_dict_schema(fields)
+        return core_schema.typed_dict_schema(
+            {
+                name: core_schema.typed_dict_field(
+                    property.get_pydantic_schema(), required=name in self.required
+                )
+                for name, property in self.properties.items()
+            }
+        )
 
 
 class AnyData(DataQualities):
