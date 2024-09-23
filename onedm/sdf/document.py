@@ -3,7 +3,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, Field
 
-from .definitions import Data, Event, Object, Property, Thing
+from . import definitions
 
 
 class Information(BaseModel):
@@ -70,49 +70,12 @@ class SDF(BaseModel):
             ),
         ),
     ] = None
-    things: Annotated[
-        dict[str, Thing],
-        Field(
-            default_factory=dict,
-            alias="sdfThing",
-            description="Definition of models for complex devices",
-        ),
-    ]
-    objects: Annotated[
-        dict[str, Object],
-        Field(
-            default_factory=dict,
-            alias="sdfObject",
-            description='Main "atom" of reusable semantics for model construction',
-        ),
-    ]
-    properties: Annotated[
-        dict[str, Property],
-        Field(
-            default_factory=dict,
-            alias="sdfProperty",
-            description="Elements of state within Things",
-        ),
-    ]
-    events: Annotated[
-        dict[str, Event],
-        Field(
-            default_factory=dict,
-            alias="sdfEvent",
-            description='"Happenings" associated with a Thing',
-        ),
-    ]
-    data: Annotated[
-        dict[str, Data],
-        Field(
-            default_factory=dict,
-            alias="sdfData",
-            description=(
-                "Common modeling patterns, data constraints, "
-                "and semantic anchor concepts"
-            ),
-        ),
-    ]
+    things: definitions.Things
+    objects: definitions.Objects
+    properties: definitions.Properties
+    actions: definitions.Actions
+    events: definitions.Events
+    data: definitions.DataDefinitions
 
     def to_json(self) -> str:
         return self.model_dump_json(indent=2, exclude_defaults=True, by_alias=True)
