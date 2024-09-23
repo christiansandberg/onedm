@@ -23,27 +23,28 @@ This library uses [Pydantic](https://docs.pydantic.dev/) to parse, validate,
 and dump model descriptions. The Pydantic models enforce a stricter validation
 than the current SDF JSON schema where each data type has its own schema.
 
-You can also validate input values against your data definitions.
+You can also validate and coerce input values against your data definitions, as
+well as generating sdf.Data objects from native Python types!
 
 
 ## Examples
 
 Loading an existing SDF document:
 
-```
->>> from onedm import sdf
+```python
+from onedm import sdf
 
->>> loader = sdf.SDFLoader()
->>> loader.load_file("tests/sdf/test.sdf.json")
->>> doc = loader.to_sdf()
+loader = sdf.SDFLoader()
+loader.load_file("tests/sdf/test.sdf.json")
+doc = loader.to_sdf()
 
->>> doc.info.title        
+doc.info.title        
 'Example document for SDF (Semantic Definition Format)'
 
->>> doc.properties["IntegerProperty"] 
-IntegerProperty(observable=True, readable=True, writable=True, label='Example integer', description=None, ref=None, required=[], type=<DataType.INTEGER: 'integer'>, sdf_type=None, nullable=True, const=2, unit=None, minimum=-2, maximum=2, exclusive_minimum=None, exclusive_maximum=None, multiple_of=2, format=None, choices=None, default=None)
+doc.properties["IntegerProperty"]
+# IntegerProperty(label='Example integer', description=None, ref=None, type='integer', sdf_type=None, nullable=False, const=None, default=None, choices=None, unit=None, minimum=-2, maximum=2, exclusive_minimum=None, exclusive_maximum=None, multiple_of=2, observable=True, readable=True, writable=True, sdf_required=None)
 
->>> doc.data["Integer"].validate_input(3)
+doc.data["Integer"].validate_input(3)
 Traceback (most recent call last):
   File "<stdin>", line 1, in <module>
   File "onedm\sdf\data.py", line 129, in validate_input
@@ -59,22 +60,30 @@ pydantic_core._pydantic_core.ValidationError: 1 validation error for constrained
 
 Creating a new document:
 
-```
->>> from onedm import sdf
+```python
+from onedm import sdf
 
->>> doc = sdf.SDF()
+doc = sdf.SDF()
 
->>> doc.info.title = "Generic switch document"
->>> doc.things["switch"] = sdf.Thing(label="Generic switch")
->>> doc.things["switch"].actions["on"] = sdf.Action(label="Turn on")
->>> print(doc.to_json())
+doc.info.title = "Generic switch document"
+doc.things["switch"] = sdf.Thing(label="Generic switch")
+doc.things["switch"].actions["on"] = sdf.Action(label="Turn on")
+doc.things["switch"].properties["state"] = sdf.BooleanProperty()
+print(doc.to_json())
+"""
 {
   "info": {
     "title": "Generic switch document"
   },
+{
   "sdfThing": {
     "switch": {
       "label": "Generic switch",
+      "sdfProperty": {
+        "state": {
+          "type": "boolean"
+        }
+      },
       "sdfAction": {
         "on": {
           "label": "Turn on"
@@ -83,4 +92,14 @@ Creating a new document:
     }
   }
 }
+"""
+```
+
+Generating SDF data descriptions from many native Python types:
+
+```python
+from onedm.sdf.from_type import data_from_type
+
+data_from_type(bool | None) 
+# BooleanData(label=None, description=None, ref=None, type='boolean', sdf_type=None, nullable=True, const=None, default=None, choices=None)
 ```
