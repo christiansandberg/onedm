@@ -14,14 +14,15 @@ def data_from_type(type_: Type) -> data.Data | None:
     None or null is not a supported type in SDF. In this case the return value
     will be None.
     """
-    return data_from_schema(TypeAdapter(type_).core_schema)
+    schema = TypeAdapter(type_).core_schema
+    if schema["type"] == "none":
+        return None
+    return data_from_schema(schema)
 
 
-def data_from_schema(schema: core_schema.CoreSchema) -> data.Data | None:
+def data_from_schema(schema: core_schema.CoreSchema) -> data.Data:
     schema_type = schema["type"]
     data_type: data.Data
-    if schema_type == "none":
-        return None
     if schema_type == "nullable":
         data_type = data_from_nullable_schema(schema)  # type: ignore
     elif schema_type == "default":
