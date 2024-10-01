@@ -12,6 +12,3 @@ class CommonQualities(BaseModel):
     label: str | None = None
     description: str | None = None
     ref: Annotated[str | None, Field(alias="sdfRef")] = None
-
-    def get_extra(self) -> dict[str, Any]:
-        return self.__pydantic_extra__ if self.__pydantic_extra__ is not None else {}
