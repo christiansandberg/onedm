@@ -27,12 +27,12 @@ from .definitions import (
     StringProperty,
     Thing,
 )
-from .document import SDF, Information
+from .document import Document, Information
 from .loader import SDFLoader
 
 __all__ = [
     "SDFLoader",
-    "SDF",
+    "Document",
     "Thing",
     "Object",
     "Property",

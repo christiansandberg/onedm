@@ -63,7 +63,7 @@ Creating a new document:
 ```python
 from onedm import sdf
 
-doc = sdf.SDF()
+doc = sdf.Document()
 
 doc.info.title = "Generic switch document"
 doc.things["switch"] = sdf.Thing(label="Generic switch")

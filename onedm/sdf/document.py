@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+from pydantic.alias_generators import to_camel
 
 from . import definitions
 
@@ -45,7 +46,11 @@ class Information(BaseModel):
     ]
 
 
-class SDF(BaseModel):
+class Document(BaseModel):
+    model_config = ConfigDict(
+        extra="allow", alias_generator=to_camel, populate_by_name=True
+    )
+
     info: Annotated[
         Information,
         Field(default_factory=Information),
@@ -63,7 +68,6 @@ class SDF(BaseModel):
     default_namespace: Annotated[
         str | None,
         Field(
-            alias="defaultNamespace",
             description=(
                 "Identifies one of the prefixes in the namespace map "
                 "to be used as a default in resolving identifiers"

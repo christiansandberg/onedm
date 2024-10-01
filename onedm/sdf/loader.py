@@ -12,7 +12,7 @@ import json
 import urllib.parse
 from typing import Any
 
-from .document import SDF
+from .document import Document
 
 
 class SDFLoader:
@@ -38,8 +38,8 @@ class SDFLoader:
         else:
             raise NotImplementedError("Not supported yet")
 
-    def to_sdf(self) -> SDF:
-        return SDF.model_validate(self.root)
+    def to_sdf(self) -> Document:
+        return Document.model_validate(self.root)
 
     def _dereference(self, definition: dict[str, Any]) -> dict[str, Any]:
         if "sdfRef" in definition:

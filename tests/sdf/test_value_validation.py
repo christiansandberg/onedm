@@ -36,7 +36,7 @@ def test_int_enum_non_const_value():
     assert value == 2
 
 
-def test_number_validation(test_model: sdf.SDF):
+def test_number_validation(test_model: sdf.Document):
     assert test_model.data["Number"].validate_input(0.5) == 0.5
     assert test_model.data["Number"].validate_input(1) == 1.0
 
@@ -54,7 +54,7 @@ def test_number_validation(test_model: sdf.SDF):
         test_model.data["Number"].validate_input(0.1)
 
 
-def test_string_validation(test_model: sdf.SDF):
+def test_string_validation(test_model: sdf.Document):
     assert test_model.data["String"].validate_input("0123456789") == "0123456789"
 
     # Invalid length
