@@ -11,7 +11,7 @@ def test_required_as_list():
             "sdfRequired": ["prop1"]
         }
     )
-    assert "prop1" in test.required
+    assert "prop1" in test.sdf_required
 
 
 def test_required_as_prop():
