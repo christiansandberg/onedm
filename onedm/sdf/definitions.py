@@ -92,6 +92,7 @@ Properties = Annotated[
 class Action(CommonQualities):
     input_data: Data | None = Field(None, alias="sdfInputData")
     output_data: Data | None = Field(None, alias="sdfOutputData")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 Actions = Annotated[
@@ -106,6 +107,7 @@ Actions = Annotated[
 
 class Event(CommonQualities):
     output_data: Data | None = Field(None, alias="sdfOutputData")
+    sdf_required: Tuple[Literal[True]] | None = None
 
 
 Events = Annotated[
@@ -136,7 +138,7 @@ class Object(CommonQualities):
     actions: Actions
     events: Events
     data: DataDefinitions
-    required: list[str] = Field(default_factory=list, alias="sdfRequired")
+    sdf_required: list[str | Literal[True]] = Field(default_factory=list)
     # If array of objects
     min_items: NonNegativeInt | None = None
     max_items: NonNegativeInt | None = None
@@ -159,7 +161,7 @@ class Thing(CommonQualities):
     actions: Actions
     events: Events
     data: DataDefinitions
-    required: list[str] = Field(default_factory=list, alias="sdfRequired")
+    sdf_required: list[str | Literal[True]] = Field(default_factory=list)
     # If array of things
     min_items: NonNegativeInt | None = None
     max_items: NonNegativeInt | None = None
