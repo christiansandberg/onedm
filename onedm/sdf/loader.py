@@ -31,6 +31,11 @@ class SDFLoader:
         self.root = json.load(fp)
         self._dereference(self.root)
 
+    def load_from_dict(self, doc: dict, url: str = ""):
+        self.url = url
+        self.root = doc
+        self._dereference(self.root)
+
     def load(self, url: str):
         result = urllib.parse.urlparse(url)
         if not result.scheme:
