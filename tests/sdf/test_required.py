@@ -8,7 +8,7 @@ def test_required_as_list():
                 "prop1": {},
                 "prop2": {},
             },
-            "sdfRequired": ["prop1"]
+            "sdfRequired": ["prop1"],
         }
     )
     assert "prop1" in test.sdf_required

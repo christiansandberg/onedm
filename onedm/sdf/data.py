@@ -21,12 +21,17 @@ from .common import CommonQualities
 class DataQualities(CommonQualities, ABC):
     """Base class for all data qualities."""
 
-    type: Literal["boolean", "number", "integer", "string", "object", "array", None]
+    type: Literal["boolean", "number", "integer", "string", "object", "array", None] = (
+        None
+    )
     sdf_type: Annotated[str, Field(pattern=r"^[a-z][\-a-z0-9]*$")] | None = None
     nullable: bool = True
     const: Any | None = None
     default: Any | None = None
-    choices: Annotated[dict[str, Data] | None, Field(alias="sdfChoice")] = None
+    choices: Annotated[dict[str, DataQualities] | None, Field(alias="sdfChoice")] = None
+
+    # Temporary storage for referenced models, will not be included in final document
+    definitions: dict[str, Data] = Field(default_factory=dict, alias="$defs")
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         """Implemented by sub-classes."""
@@ -283,12 +288,28 @@ class AnyData(DataQualities):
 
 
 Data = Union[
+    AnyData,
     Annotated[
         IntegerData | NumberData | BooleanData | StringData | ObjectData | ArrayData,
         Field(discriminator="type"),
     ],
-    AnyData,
 ]
+
+
+DataDefinitions = Annotated[
+    dict[str, Data],
+    Field(
+        default_factory=dict,
+        alias="sdfData",
+        description=(
+            "Common modeling patterns, data constraints, "
+            "and semantic anchor concepts"
+        ),
+    ),
+]
+
 
 ObjectData.model_rebuild()
 ArrayData.model_rebuild()
+DataQualities.model_rebuild()
+AnyData.model_rebuild()

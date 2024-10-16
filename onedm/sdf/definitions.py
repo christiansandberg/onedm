@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal, Tuple, Union
 
-from pydantic import Field, NonNegativeInt
+from pydantic import Field, NonNegativeInt, TypeAdapter
 
 from .common import CommonQualities
 from .data import (
@@ -10,6 +10,7 @@ from .data import (
     ArrayData,
     BooleanData,
     Data,
+    DataDefinitions,
     IntegerData,
     NumberData,
     ObjectData,
@@ -17,56 +18,43 @@ from .data import (
 )
 
 
-class NumberProperty(NumberData):
+class PropertyBase:
     observable: bool = True
     readable: bool = True
     writable: bool = True
     sdf_required: Tuple[Literal[True]] | None = None
 
 
-class IntegerProperty(IntegerData):
-    observable: bool = True
-    readable: bool = True
-    writable: bool = True
-    sdf_required: Tuple[Literal[True]] | None = None
+class NumberProperty(NumberData, PropertyBase):
+    pass
 
 
-class BooleanProperty(BooleanData):
-    observable: bool = True
-    readable: bool = True
-    writable: bool = True
-    sdf_required: Tuple[Literal[True]] | None = None
+class IntegerProperty(IntegerData, PropertyBase):
+    pass
 
 
-class StringProperty(StringData):
-    observable: bool = True
-    readable: bool = True
-    writable: bool = True
-    sdf_required: Tuple[Literal[True]] | None = None
+class BooleanProperty(BooleanData, PropertyBase):
+    pass
 
 
-class ArrayProperty(ArrayData):
-    observable: bool = True
-    readable: bool = True
-    writable: bool = True
-    sdf_required: Tuple[Literal[True]] | None = None
+class StringProperty(StringData, PropertyBase):
+    pass
 
 
-class ObjectProperty(ObjectData):
-    observable: bool = True
-    readable: bool = True
-    writable: bool = True
-    sdf_required: Tuple[Literal[True]] | None = None
+class ArrayProperty(ArrayData, PropertyBase):
+    pass
 
 
-class AnyProperty(AnyData):
-    observable: bool = True
-    readable: bool = True
-    writable: bool = True
-    sdf_required: Tuple[Literal[True]] | None = None
+class ObjectProperty(ObjectData, PropertyBase):
+    pass
+
+
+class AnyProperty(AnyData, PropertyBase):
+    pass
 
 
 Property = Union[
+    AnyProperty,
     Annotated[
         IntegerProperty
         | NumberProperty
@@ -76,8 +64,15 @@ Property = Union[
         | ObjectProperty,
         Field(discriminator="type"),
     ],
-    AnyProperty,
 ]
+
+
+PropertyAdapter: TypeAdapter[Property] = TypeAdapter(Property)
+
+
+def property_from_data(data: Data) -> Property:
+    return PropertyAdapter.validate_python(data, from_attributes=True)
+
 
 Properties = Annotated[
     dict[str, Property],
@@ -116,19 +111,6 @@ Events = Annotated[
         default_factory=dict,
         alias="sdfEvent",
         description='"Happenings" associated with a Thing',
-    ),
-]
-
-
-DataDefinitions = Annotated[
-    dict[str, Data],
-    Field(
-        default_factory=dict,
-        alias="sdfData",
-        description=(
-            "Common modeling patterns, data constraints, "
-            "and semantic anchor concepts"
-        ),
     ),
 ]
 

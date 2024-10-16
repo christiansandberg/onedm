@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_serializer
 from pydantic.alias_generators import to_camel
 
 from . import definitions
@@ -83,3 +83,54 @@ class Document(BaseModel):
 
     def to_json(self) -> str:
         return self.model_dump_json(indent=2, exclude_defaults=True, by_alias=True)
+
+    @field_serializer("data", mode="wrap")
+    def populate_sdf_data(self, data: dict, nxt):
+        """Populate sdfData
+
+        Scans through the whole document looking for $defs and collects them
+        in the document's #/sdfData.
+        """
+        data = data.copy()
+
+        def update_from_parent(parent):
+            for property in parent.properties.values():
+                data.update(property.definitions)
+            for action in parent.actions.values():
+                if action.input_data:
+                    data.update(action.input_data.definitions)
+                if action.output_data:
+                    data.update(action.output_data.definitions)
+            for event in parent.events.values():
+                if event.output_data:
+                    data.update(event.output_data.definitions)
+
+            if isinstance(parent, definitions.Thing):
+                for thing in parent.things.values():
+                    update_from_parent(thing)
+                for obj in parent.objects.values():
+                    update_from_parent(obj)
+
+        update_from_parent(self)
+        for thing in self.things.values():
+            update_from_parent(thing)
+
+        return nxt(data)
+
+    @model_serializer(mode="wrap")
+    def remove_refs(self, nxt):
+        """Remove $ref and $defs
+
+        These are temporary entries created by Pydantic.
+        """
+        doc = nxt(self)
+        remove_refs(doc)
+        return doc
+
+
+def remove_refs(obj: dict[str, Any]):
+    for key, value in list(obj.items()):
+        if key in ("$ref", "$defs"):
+            del obj[key]
+        if isinstance(value, dict):
+            remove_refs(value)
