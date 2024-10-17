@@ -137,7 +137,11 @@ Objects = Annotated[
 
 
 class Thing(CommonQualities):
-    things: Things
+    things: dict[str, Thing] = Field(
+        default_factory=dict,
+        alias="sdfThing",
+        description="Definition of models for complex devices",
+    )
     objects: Objects
     properties: Properties
     actions: Actions
@@ -149,11 +153,4 @@ class Thing(CommonQualities):
     max_items: NonNegativeInt | None = None
 
 
-Things = Annotated[
-    dict[str, Thing],
-    Field(
-        default_factory=dict,
-        alias="sdfThing",
-        description="Definition of models for complex devices",
-    ),
-]
+Thing.model_rebuild()

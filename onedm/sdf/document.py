@@ -74,7 +74,11 @@ class Document(BaseModel):
             ),
         ),
     ] = None
-    things: definitions.Things
+    things: dict[str, definitions.Thing] = Field(
+        default_factory=dict,
+        alias="sdfThing",
+        description="Definition of models for complex devices",
+    )
     objects: definitions.Objects
     properties: definitions.Properties
     actions: definitions.Actions
