@@ -71,7 +71,7 @@ PropertyAdapter: TypeAdapter[Property] = TypeAdapter(Property)
 
 
 def property_from_data(data: Data) -> Property:
-    return PropertyAdapter.validate_python(data, from_attributes=True)
+    return PropertyAdapter.validate_python(data.model_dump())
 
 
 Properties = Annotated[

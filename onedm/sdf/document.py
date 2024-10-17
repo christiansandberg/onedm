@@ -89,7 +89,7 @@ class Document(BaseModel):
         """Populate sdfData
 
         Scans through the whole document looking for $defs and collects them
-        in the document's #/sdfData.
+        in the document's root #/sdfData.
         """
         data = data.copy()
 
@@ -118,19 +118,19 @@ class Document(BaseModel):
         return nxt(data)
 
     @model_serializer(mode="wrap")
-    def remove_refs(self, nxt):
+    def remove_definitions(self, nxt):
         """Remove $ref and $defs
 
         These are temporary entries created by Pydantic.
         """
         doc = nxt(self)
-        remove_refs(doc)
+        remove_definitions(doc)
         return doc
 
 
-def remove_refs(obj: dict[str, Any]):
+def remove_definitions(obj: dict[str, Any]):
     for key, value in list(obj.items()):
-        if key in ("$ref", "$defs"):
+        if key == "$defs":
             del obj[key]
         if isinstance(value, dict):
-            remove_refs(value)
+            remove_definitions(value)
