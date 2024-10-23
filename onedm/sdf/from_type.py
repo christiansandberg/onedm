@@ -59,6 +59,13 @@ class GenerateSDF(GenerateJsonSchema):
             del definition["enum"]
         return definition
 
+    def literal_schema(self, schema: core_schema.LiteralSchema):
+        definition = super().literal_schema(schema)
+        if "enum" in definition:
+            # Unnecessary
+            del definition["enum"]
+        return definition
+
     def bytes_schema(self, schema: core_schema.BytesSchema):
         definition = super().bytes_schema(schema)
         definition["sdfType"] = "byte-string"
