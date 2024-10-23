@@ -61,8 +61,8 @@ class GenerateSDF(GenerateJsonSchema):
 
     def literal_schema(self, schema: core_schema.LiteralSchema):
         definition = super().literal_schema(schema)
-        if "enum" in definition:
-            # Unnecessary
+        if "const" in definition and "enum" in definition:
+            # Don't need both
             del definition["enum"]
         return definition
 
