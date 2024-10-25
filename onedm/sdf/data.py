@@ -25,6 +25,7 @@ class DataQualities(CommonQualities, ABC):
         None
     )
     sdf_type: Annotated[str, Field(pattern=r"^[a-z][\-a-z0-9]*$")] | None = None
+    unit: str | None = None
     nullable: bool = True
     const: Any | None = None
     default: Any | None = None
@@ -66,7 +67,6 @@ class DataQualities(CommonQualities, ABC):
 
 class NumberData(DataQualities):
     type: Literal["number"] = "number"
-    unit: str | None = None
     minimum: float | None = None
     maximum: float | None = None
     exclusive_minimum: float | None = None
@@ -115,7 +115,6 @@ class NumberData(DataQualities):
 
 class IntegerData(DataQualities):
     type: Literal["integer"] = "integer"
-    unit: str | None = None
     minimum: int | None = None
     maximum: int | None = None
     exclusive_minimum: int | None = None
@@ -293,19 +292,6 @@ Data = Union[
         IntegerData | NumberData | BooleanData | StringData | ObjectData | ArrayData,
         Field(discriminator="type"),
     ],
-]
-
-
-DataDefinitions = Annotated[
-    dict[str, Data],
-    Field(
-        default_factory=dict,
-        alias="sdfData",
-        description=(
-            "Common modeling patterns, data constraints, "
-            "and semantic anchor concepts"
-        ),
-    ),
 ]
 
 

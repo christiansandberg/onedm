@@ -10,7 +10,6 @@ from .data import (
     ArrayData,
     BooleanData,
     Data,
-    DataDefinitions,
     IntegerData,
     NumberData,
     ObjectData,
@@ -74,66 +73,45 @@ def property_from_data(data: Data) -> Property:
     return PropertyAdapter.validate_python(data.model_dump())
 
 
-Properties = Annotated[
-    dict[str, Property],
-    Field(
-        default_factory=dict,
-        alias="sdfProperty",
-        description="Elements of state within Things",
-    ),
-]
-
-
 class Action(CommonQualities):
-    input_data: Data | None = Field(None, alias="sdfInputData")
-    output_data: Data | None = Field(None, alias="sdfOutputData")
+    input_data: Annotated[Data | None, Field(alias="sdfInputData")] = None
+    output_data: Annotated[Data | None, Field(None, alias="sdfOutputData")] = None
     sdf_required: Tuple[Literal[True]] | None = None
-
-
-Actions = Annotated[
-    dict[str, Action],
-    Field(
-        default_factory=dict,
-        alias="sdfAction",
-        description="Commands and methods which are invoked",
-    ),
-]
 
 
 class Event(CommonQualities):
-    output_data: Data | None = Field(None, alias="sdfOutputData")
+    output_data: Annotated[Data | None, Field(None, alias="sdfOutputData")] = None
     sdf_required: Tuple[Literal[True]] | None = None
 
 
-Events = Annotated[
-    dict[str, Event],
-    Field(
+class Object(CommonQualities):
+    properties: dict[str, Property] = Field(
+        default_factory=dict,
+        alias="sdfProperty",
+        description="Elements of state within Things",
+    )
+    actions: dict[str, Action] = Field(
+        default_factory=dict,
+        alias="sdfAction",
+        description="Commands and methods which are invoked",
+    )
+    events: dict[str, Event] = Field(
         default_factory=dict,
         alias="sdfEvent",
         description='"Happenings" associated with a Thing',
-    ),
-]
-
-
-class Object(CommonQualities):
-    properties: Properties
-    actions: Actions
-    events: Events
-    data: DataDefinitions
+    )
+    data: dict[str, Data] = Field(
+        default_factory=dict,
+        alias="sdfData",
+        description=(
+            "Common modeling patterns, data constraints, "
+            "and semantic anchor concepts"
+        ),
+    )
     sdf_required: list[str | Literal[True]] = Field(default_factory=list)
     # If array of objects
     min_items: NonNegativeInt | None = None
     max_items: NonNegativeInt | None = None
-
-
-Objects = Annotated[
-    dict[str, Object],
-    Field(
-        default_factory=dict,
-        alias="sdfObject",
-        description='Main "atom" of reusable semantics for model construction',
-    ),
-]
 
 
 class Thing(CommonQualities):
@@ -142,11 +120,34 @@ class Thing(CommonQualities):
         alias="sdfThing",
         description="Definition of models for complex devices",
     )
-    objects: Objects
-    properties: Properties
-    actions: Actions
-    events: Events
-    data: DataDefinitions
+    objects: dict[str, Object] = Field(
+        default_factory=dict,
+        alias="sdfObject",
+        description='Main "atom" of reusable semantics for model construction',
+    )
+    properties: dict[str, Property] = Field(
+        default_factory=dict,
+        alias="sdfProperty",
+        description="Elements of state within Things",
+    )
+    actions: dict[str, Action] = Field(
+        default_factory=dict,
+        alias="sdfAction",
+        description="Commands and methods which are invoked",
+    )
+    events: dict[str, Event] = Field(
+        default_factory=dict,
+        alias="sdfEvent",
+        description='"Happenings" associated with a Thing',
+    )
+    data: dict[str, Data] = Field(
+        default_factory=dict,
+        alias="sdfData",
+        description=(
+            "Common modeling patterns, data constraints, "
+            "and semantic anchor concepts"
+        ),
+    )
     sdf_required: list[str | Literal[True]] = Field(default_factory=list)
     # If array of things
     min_items: NonNegativeInt | None = None
