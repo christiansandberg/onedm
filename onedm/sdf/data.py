@@ -60,9 +60,9 @@ class DataQualities(CommonQualities, ABC):
             schema = core_schema.nullable_schema(schema)
         return schema
 
-    def validate_input(self, input: Any) -> Any:
+    def validate_input(self, value: Any) -> Any:
         """Validate and coerce a value."""
-        return SchemaValidator(self.get_pydantic_schema()).validate_python(input)
+        return SchemaValidator(self.get_pydantic_schema()).validate_python(value)
 
 
 class NumberData(DataQualities):
@@ -77,8 +77,8 @@ class NumberData(DataQualities):
     default: float | None = None
 
     @field_serializer("type")
-    def always_include_type(self, type: str, _):
-        return type
+    def always_include_type(self, type_: str, _):
+        return type_
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.sdf_type == "unix-time":
@@ -128,8 +128,8 @@ class IntegerData(DataQualities):
     _enum = None
 
     @field_serializer("type")
-    def always_include_type(self, type: str, _):
-        return type
+    def always_include_type(self, type_: str, _):
+        return type_
 
     def _get_base_schema(self) -> core_schema.IntSchema:
         return core_schema.int_schema(
@@ -158,12 +158,12 @@ class IntegerData(DataQualities):
             )
         return self._enum
 
-    def validate_input(self, input: Any) -> IntEnum | int:
-        value = super().validate_input(input)
+    def validate_input(self, value: Any) -> IntEnum | int:
+        value = super().validate_input(value)
         # Convert to enum.IntEnum if possible
         if enum_cls := self.to_enum():
             try:
-                value = enum_cls(value)
+                return enum_cls(value)
             except ValueError:
                 # Value is valid but not a specific enum value
                 pass
@@ -179,8 +179,8 @@ class BooleanData(DataQualities):
     )
 
     @field_serializer("type")
-    def always_include_type(self, type: str, _):
-        return type
+    def always_include_type(self, type_: str, _):
+        return type_
 
     def _get_base_schema(self) -> core_schema.BoolSchema:
         return core_schema.bool_schema()
@@ -201,8 +201,8 @@ class StringData(DataQualities):
     default: str | None = None
 
     @field_serializer("type")
-    def always_include_type(self, type: str, _):
-        return type
+    def always_include_type(self, type_: str, _):
+        return type_
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.enum is not None:
@@ -238,8 +238,8 @@ class ArrayData(DataQualities):
     default: list | None = None
 
     @field_serializer("type")
-    def always_include_type(self, type: str, _):
-        return type
+    def always_include_type(self, type_: str, _):
+        return type_
 
     def _get_base_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
         if self.unique_items:
@@ -263,8 +263,8 @@ class ObjectData(DataQualities):
     default: dict[str, Any] | None = None
 
     @field_serializer("type")
-    def always_include_type(self, type: str, _):
-        return type
+    def always_include_type(self, type_: str, _):
+        return type_
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.properties is None:

@@ -24,7 +24,7 @@ class SDFLoader:
 
     def load_file(self, path):
         self.url = str(path)
-        with open(path, "r") as fp:
+        with open(path, "r", encoding="utf-8") as fp:
             self.load_from_fp(fp)
 
     def load_from_fp(self, fp: io.TextIOBase):

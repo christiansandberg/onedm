@@ -50,7 +50,7 @@ class Document(BaseModel):
         extra="allow", alias_generator=to_camel, populate_by_name=True
     )
 
-    info: Information = Field(default_factory=lambda: Information())
+    info: Information = Field(default_factory=Information)
     namespace: dict[str, str] = Field(
         default_factory=dict,
         description=(
@@ -113,9 +113,11 @@ class Document(BaseModel):
         """
         data = data.copy()
 
-        def update_from_parent(parent):
-            for property in parent.properties.values():
-                data.update(property.definitions)
+        def update_from_parent(
+            parent: Document | definitions.Object | definitions.Thing,
+        ):
+            for prop in parent.properties.values():
+                data.update(prop.definitions)
             for action in parent.actions.values():
                 if action.input_data:
                     data.update(action.input_data.definitions)
@@ -132,7 +134,7 @@ class Document(BaseModel):
                     update_from_parent(obj)
 
         update_from_parent(self)
-        for thing in self.things.values():
+        for thing in self.things.values():  # pylint: disable=no-member
             update_from_parent(thing)
 
         return nxt(data)

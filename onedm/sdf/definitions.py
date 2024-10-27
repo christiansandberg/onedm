@@ -17,7 +17,7 @@ from .data import (
 )
 
 
-class PropertyBase:
+class PropertyBase:  # pylint: disable=too-few-public-methods
     observable: bool = True
     readable: bool = True
     writable: bool = True

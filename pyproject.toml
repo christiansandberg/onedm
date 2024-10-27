@@ -29,3 +29,23 @@ Issues = "https://github.com/christiansandberg/onedm/issues"
 [build-system]
 requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
+
+[tool.isort]
+profile = "black"
+
+[tool.pylint."messages control"]
+disable = [
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "too-many-instance-attributes",
+    "too-many-return-statements",
+    "duplicate-code",
+    "fixme",
+]
+
+[tool.pylint.format]
+max-line-length = 88
+
+[tool.mypy]
+plugins = "pydantic.mypy"
