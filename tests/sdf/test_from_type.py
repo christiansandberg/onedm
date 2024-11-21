@@ -99,6 +99,16 @@ def test_str_enum():
     assert not data.nullable
 
 
+def test_union():
+    data = data_from_type(int | str)
+
+    assert len(data.choices) == 2
+    assert "choice-1" in data.choices
+    assert "choice-2" in data.choices
+    assert data.choices["choice-1"].type == "integer"
+    assert data.choices["choice-2"].type == "string"
+
+
 def test_const():
     data = data_from_type(Literal["const"])
 

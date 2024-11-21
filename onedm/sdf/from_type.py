@@ -1,6 +1,6 @@
 """Conversion from native types to sdfData."""
 
-from typing import Type
+from typing import Any, Type
 
 from pydantic import TypeAdapter
 from pydantic.json_schema import GenerateJsonSchema
@@ -59,11 +59,12 @@ class GenerateSDF(GenerateJsonSchema):
             del definition["enum"]
         return definition
 
-    def literal_schema(self, schema: core_schema.LiteralSchema):
-        definition = super().literal_schema(schema)
-        if "const" in definition and "enum" in definition:
-            # Don't need both
-            del definition["enum"]
+    def union_schema(self, schema: core_schema.UnionSchema):
+        definition = super().union_schema(schema)
+        definition["sdfChoice"] = {
+            f"choice-{i}": choice for i, choice in enumerate(definition["anyOf"], start=1)
+        }
+        del definition["anyOf"]
         return definition
 
     def bytes_schema(self, schema: core_schema.BytesSchema):
