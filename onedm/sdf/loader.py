@@ -47,7 +47,7 @@ class SDFLoader:
         return Document.model_validate(self.root)
 
     def _dereference(self, definition: dict[str, Any]) -> dict[str, Any]:
-        if "sdfRef" in definition:
+        while "sdfRef" in definition:
             # This reference will be used to patch the referenced original
             patch = definition.copy()
             ref: str = patch.pop("sdfRef")
@@ -85,8 +85,7 @@ class SDFLoader:
                 original = original[fragment]
 
             if patch:
-                # TODO: Do proper JSON Merge Patch (RFC 7396)
-                definition = {**original, **patch}
+                definition = merge_patch(original, patch)
             else:
                 # Nothing to patch
                 definition = original
@@ -97,3 +96,15 @@ class SDFLoader:
                 definition[name] = self._dereference(value)
 
         return definition
+
+
+def merge_patch(target: dict, patch) -> dict:
+    if not isinstance(patch, dict):
+        return patch
+    patched = target.copy()
+    for name, value in patch.items():
+        if value is None and name in target:
+            del patched[name]
+        else:
+            patched[name] = merge_patch(target.get(name, {}), value)
+    return patched

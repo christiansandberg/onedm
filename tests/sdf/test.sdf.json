@@ -126,6 +126,10 @@
     },
     "Unknown": {},
     "Reference": {
+      "sdfRef": "#/sdfData/AnotherReference",
+      "maximum": 3
+    },
+    "AnotherReference": {
       "sdfRef": "#/sdfData/Integer",
       "const": 0
     }
