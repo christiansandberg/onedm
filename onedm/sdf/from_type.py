@@ -31,8 +31,7 @@ def definition_from_type(type_: Type) -> dict:
 
 
 class GenerateSDF(GenerateJsonSchema):
-    """Handles the differences between JSON schema and SDF
-    """
+    """Handles the differences between JSON schema and SDF"""
 
     def generate_inner(self, schema: core_schema.CoreSchema):
         if "ref" in schema:
