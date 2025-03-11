@@ -32,12 +32,12 @@ def definition_from_type(type_: Type) -> dict:
 
 class GenerateSDF(GenerateJsonSchema):
     """Handles the differences between JSON schema and SDF
-
-    Note that the Pydantic SDF models converts '$ref' and 'title' to 'sdfRef'
-    and 'label'.
     """
 
     def generate_inner(self, schema: core_schema.CoreSchema):
+        if "ref" in schema:
+            # Only generate dereferenced schemas for now
+            del schema["ref"]  # type: ignore
         definition = super().generate_inner(schema)
         # In SDF everything is nullable by default while in JSON schema it is not
         definition.setdefault("nullable", False)

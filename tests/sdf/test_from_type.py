@@ -52,14 +52,9 @@ def test_enum():
 
     data = data_from_type(MyEnum)
 
-    # Enum should be referenced
-    assert data.ref == "#/sdfData/MyEnum"
-    assert "MyEnum" in data.definitions
-    my_enum = data.definitions["MyEnum"]
-
-    assert isinstance(my_enum, sdf.AnyData)
-    assert my_enum.choices["ONE"].const == 1
-    assert my_enum.choices["TWO"].const == "two"
+    assert isinstance(data, sdf.AnyData)
+    assert data.choices["ONE"].const == 1
+    assert data.choices["TWO"].const == "two"
     assert not data.nullable
 
 
@@ -70,14 +65,9 @@ def test_int_enum():
 
     data = data_from_type(MyEnum)
 
-    # Model should be referenced
-    assert data.ref == "#/sdfData/MyEnum"
-    assert "MyEnum" in data.definitions
-    my_enum = data.definitions["MyEnum"]
-
-    assert isinstance(my_enum, sdf.IntegerData)
-    assert my_enum.choices["ONE"].const == 1
-    assert my_enum.choices["TWO"].const == 2
+    assert isinstance(data, sdf.IntegerData)
+    assert data.choices["ONE"].const == 1
+    assert data.choices["TWO"].const == 2
     assert not data.nullable
 
 
@@ -88,14 +78,9 @@ def test_str_enum():
 
     data = data_from_type(MyEnum)
 
-    # Model should be referenced
-    assert data.ref == "#/sdfData/MyEnum"
-    assert "MyEnum" in data.definitions
-    my_enum = data.definitions["MyEnum"]
-
-    assert isinstance(my_enum, sdf.StringData)
-    assert my_enum.choices["ONE"].const == "one"
-    assert my_enum.choices["TWO"].const == "two"
+    assert isinstance(data, sdf.StringData)
+    assert data.choices["ONE"].const == "one"
+    assert data.choices["TWO"].const == "two"
     assert not data.nullable
 
 
@@ -149,31 +134,36 @@ def test_set():
 
 
 def test_model():
+    class MyEnum(str, enum.Enum):
+        ONE = "one"
+        TWO = "two"
+
     class TestModel(BaseModel):
         with_default: int = 2
         with_alias: Annotated[int, Field(alias="withAlias")] = 0
         optional: float | None = None
         required: bool | None
+        enumeration: MyEnum | None = None
 
     data = data_from_type(TestModel)
 
-    # Model should be referenced
-    assert data.ref == "#/sdfData/TestModel"
-    assert "TestModel" in data.definitions
-    test_model = data.definitions["TestModel"]
-
-    assert isinstance(test_model, sdf.ObjectData)
+    assert isinstance(data, sdf.ObjectData)
     assert not data.nullable
-    assert test_model.required == ["required"]
+    assert data.required == ["required"]
 
-    assert isinstance(test_model.properties["with_default"], sdf.IntegerData)
-    assert test_model.properties["with_default"].default == 2
-    assert not test_model.properties["with_default"].nullable
+    assert isinstance(data.properties["with_default"], sdf.IntegerData)
+    assert data.properties["with_default"].default == 2
+    assert not data.properties["with_default"].nullable
 
-    assert "withAlias" in test_model.properties
+    assert "withAlias" in data.properties
 
-    assert test_model.properties["required"].nullable
-    assert test_model.properties["optional"].nullable
+    assert data.properties["required"].nullable
+    assert data.properties["optional"].nullable
+
+    assert isinstance(data.properties["enumeration"], sdf.StringData)
+    assert data.properties["enumeration"].choices["ONE"].const == "one"
+    assert data.properties["enumeration"].choices["TWO"].const == "two"
+    assert data.properties["enumeration"].nullable
 
 
 def test_dataclass():
@@ -183,17 +173,12 @@ def test_dataclass():
 
     data = data_from_type(TestModel)
 
-    # Model should be referenced
-    assert data.ref == "#/sdfData/TestModel"
-    assert "TestModel" in data.definitions
-    test_model = data.definitions["TestModel"]
-
-    assert isinstance(test_model, sdf.ObjectData)
+    assert isinstance(data, sdf.ObjectData)
     assert not data.nullable
 
-    assert isinstance(test_model.properties["with_default"], sdf.IntegerData)
-    assert test_model.properties["with_default"].default == 2
-    assert not test_model.properties["with_default"].nullable
+    assert isinstance(data.properties["with_default"], sdf.IntegerData)
+    assert data.properties["with_default"].default == 2
+    assert not data.properties["with_default"].nullable
 
 
 def test_label():
@@ -212,27 +197,3 @@ def test_unit():
     data = data_from_type(Annotated[float, Field(json_schema_extra={"unit": "s"})])
 
     assert data.unit == "s"
-
-
-def test_document():
-    doc = sdf.Document()
-
-    @dataclass
-    class TestModel:
-        with_default: int = 2
-
-    data = data_from_type(TestModel)
-    doc.things["thing"] = sdf.Thing()
-    doc.things["thing"].objects["object"] = sdf.Object()
-    doc.things["thing"].objects["object"].properties["prop"] = (
-        sdf.definitions.property_from_data(data)
-    )
-
-    dump = doc.model_dump(by_alias=True)
-    assert (
-        dump["sdfThing"]["thing"]["sdfObject"]["object"]["sdfProperty"]["prop"][
-            "sdfRef"
-        ]
-        == "#/sdfData/TestModel"
-    )
-    assert "TestModel" in dump["sdfData"]

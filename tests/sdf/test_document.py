@@ -18,19 +18,19 @@ def test_document_generation():
                                             ref="#/sdfData/MyEnum",
                                             # Put a temporary definition here
                                         ),
-                                        definitions={
-                                            "MyEnum": sdf.IntegerData(
-                                                choices={
-                                                    "ONE": sdf.IntegerData(
-                                                        const=1
-                                                    )
-                                                }
-                                            )
-                                        }
                                     )
                                 }
                             )
                         }
+                    )
+                }
+            )
+        },
+        data={
+            "MyEnum": sdf.IntegerData(
+                choices={
+                    "ONE": sdf.IntegerData(
+                        const=1
                     )
                 }
             )

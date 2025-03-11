@@ -10,4 +10,4 @@ class CommonQualities(BaseModel):
 
     label: Annotated[str | None, Field(validation_alias="title")] = None
     description: str | None = None
-    ref: Annotated[str | None, Field(alias="sdfRef", validation_alias="$ref")] = None
+    ref: Annotated[str | None, Field(alias="sdfRef")] = None

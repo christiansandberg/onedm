@@ -31,9 +31,6 @@ class DataQualities(CommonQualities, ABC):
     default: Any | None = None
     choices: Annotated[dict[str, DataQualities] | None, Field(alias="sdfChoice")] = None
 
-    # Temporary storage for referenced models, will not be included in final document
-    definitions: dict[str, Data] = Field(default_factory=dict, alias="$defs")
-
     def _get_base_schema(self) -> core_schema.CoreSchema:
         """Implemented by sub-classes."""
         raise NotImplementedError
