@@ -12,12 +12,14 @@ as best as it can and should hence be considered unstable.
 Currently it supports limited loading and generation of
 [SDF](https://ietf-wg-asdf.github.io/SDF/sdf.html) documents.
 
-> The Semantic Definition Format (SDF) is a format for domain experts to use in
-> the creation and maintenance of data and interaction models that describe Things,
-> i.e., physical objects that are available for interaction over a network.
-> An SDF specification describes definitions of SDF Objects/SDF Things and their
-> associated interactions (Events, Actions, Properties), as well as the Data types
-> for the information exchanged in those interactions.
+> The Semantic Definition Format (SDF) is concerned with Things, namely physical
+> objects that are available for interaction over a network. SDF is a format for
+> domain experts to use in the creation and maintenance of data and interaction
+> models that describe Things. An SDF specification describes definitions of
+> SDF Objects/SDF Things and their associated interactions (Events, Actions,
+> Properties), as well as the Data types for the information exchanged in those
+> interactions. Tools convert this format to database formats and other
+> serializations as needed.
 
 This library uses [Pydantic](https://docs.pydantic.dev/) to parse, validate,
 and dump model descriptions. The Pydantic models enforce a stricter validation
