@@ -1,3 +1,4 @@
+from __future__ import annotations
 from dataclasses import dataclass
 import enum
 from pydantic import Field, BaseModel
@@ -187,6 +188,16 @@ def test_dataclass():
     assert isinstance(data.properties["with_default"], sdf.IntegerData)
     assert data.properties["with_default"].default == 2
     assert not data.properties["with_default"].nullable
+
+
+@pytest.mark.xfail(reason="Recursive models not supported yet", raises=KeyError)
+def test_recursive_model():
+    class TestModel(BaseModel):
+        child: TestModel | None = None
+
+    data = data_from_type(TestModel)
+
+    assert isinstance(data, sdf.ObjectData)
 
 
 def test_label():
