@@ -85,13 +85,14 @@ def test_str_enum():
 
 
 def test_union():
-    data = data_from_type(int | str)
+    data = data_from_type(int | str | None)
 
     assert len(data.choices) == 2
-    assert "choice-1" in data.choices
-    assert "choice-2" in data.choices
-    assert data.choices["choice-1"].type == "integer"
-    assert data.choices["choice-2"].type == "string"
+    assert "int" in data.choices
+    assert "str" in data.choices
+    assert data.choices["int"].type == "integer"
+    assert data.choices["str"].type == "string"
+    assert data.nullable
 
 
 def test_const():
@@ -113,6 +114,13 @@ def test_nullable():
 
     assert isinstance(data, sdf.IntegerData)
     assert data.nullable
+
+
+def test_none():
+    data = data_from_type(None)
+
+    assert data.const is None
+    assert "const" in data.model_fields_set
 
 
 def test_list():

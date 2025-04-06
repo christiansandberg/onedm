@@ -11,16 +11,9 @@ from . import data
 DataAdapter: TypeAdapter[data.Data] = TypeAdapter(data.Data)
 
 
-def data_from_type(type_: Type) -> data.Data | None:
-    """Create from a native Python or Pydantic type.
-
-    None or null is not a supported type in SDF. In this case the return value
-    will be None.
-    """
+def data_from_type(type_: Type) -> data.Data:
+    """Create from a native Python or Pydantic type"""
     definition = definition_from_type(type_)
-    if definition.get("type") == "null":
-        # Not supported in SDF
-        return None
     return DataAdapter.validate_python(definition)
 
 
@@ -48,6 +41,9 @@ class GenerateSDF(GenerateJsonSchema):
         definition["nullable"] = True
         return definition
 
+    def none_schema(self, schema: core_schema.NoneSchema):
+        return {"const": None}
+
     def enum_schema(self, schema: core_schema.EnumSchema):
         definition = super().enum_schema(schema)
         if "enum" in definition:
@@ -59,13 +55,14 @@ class GenerateSDF(GenerateJsonSchema):
         return definition
 
     def union_schema(self, schema: core_schema.UnionSchema):
-        definition = super().union_schema(schema)
-        definition["sdfChoice"] = {
-            f"choice-{i}": choice
-            for i, choice in enumerate(definition["anyOf"], start=1)
-        }
-        del definition["anyOf"]
-        return definition
+        choices = {}
+        for choice in schema["choices"]:
+            if isinstance(choice, tuple):
+                choice_schema, name = choice
+                choices[name] = self.generate_inner(choice_schema)
+            elif "type" in choice:
+                choices[choice["type"]] = self.generate_inner(choice)
+        return {"sdfChoice": choices}
 
     def bytes_schema(self, schema: core_schema.BytesSchema):
         definition = super().bytes_schema(schema)
