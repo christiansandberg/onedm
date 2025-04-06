@@ -1,19 +1,19 @@
 import logging
 from pathlib import Path
 import subprocess
-import tempfile
 
 import pytest
 from onedm import sdf
 
 
 @pytest.fixture(scope="session")
-def playground():
-    with tempfile.TemporaryDirectory() as tmpdir:
-        subprocess.run(
-            ["git", "clone", "https://github.com/one-data-model/playground.git", tmpdir]
-        )
-        yield Path(tmpdir)
+def playground(tmp_path_factory: pytest.TempPathFactory):
+    tmpdir = tmp_path_factory.mktemp("playground")
+    subprocess.run(
+        ["git", "clone", "https://github.com/one-data-model/playground.git", tmpdir],
+        check=True,
+    )
+    return tmpdir
 
 
 def test_parse_all_playground_models(playground: Path):
