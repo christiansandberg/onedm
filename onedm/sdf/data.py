@@ -12,7 +12,7 @@ from enum import EnumMeta, IntEnum
 from re import Pattern
 from typing import Annotated, Any, Literal, Union
 
-from pydantic import Field, NonNegativeInt, field_serializer
+from pydantic import Field, NonNegativeInt, model_serializer
 from pydantic_core import SchemaValidator, core_schema
 
 from .common import CommonQualities
@@ -31,6 +31,14 @@ class DataQualities(CommonQualities, ABC):
     default: Any | None = None
     choices: Annotated[dict[str, DataQualities] | None, Field(alias="sdfChoice")] = None
 
+    @model_serializer(mode="wrap")
+    def serialize(self, next_):
+        dumped = next_(self)
+        # Always include type field since it is needed as a discriminator
+        if self.type is not None:
+            dumped["type"] = self.type
+        return dumped
+
     def _get_base_schema(self) -> core_schema.CoreSchema:
         """Implemented by sub-classes."""
         raise NotImplementedError
@@ -39,7 +47,9 @@ class DataQualities(CommonQualities, ABC):
         """Get the Pydantic schema for this data quality."""
         schema: core_schema.CoreSchema
 
-        if self.const is not None:
+        if self.const is None and "const" in self.model_fields_set:
+            schema = core_schema.none_schema()
+        elif self.const is not None:
             schema = core_schema.literal_schema([self.const])
         elif self.choices is not None:
             schema = core_schema.union_schema(
@@ -72,10 +82,6 @@ class NumberData(DataQualities):
     format: str | None = None
     const: float | None = None
     default: float | None = None
-
-    @field_serializer("type")
-    def always_include_type(self, type_: str, _):
-        return type_
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.sdf_type == "unix-time":
@@ -124,10 +130,6 @@ class IntegerData(DataQualities):
     default: int | None = None
     _enum = None
 
-    @field_serializer("type")
-    def always_include_type(self, type_: str, _):
-        return type_
-
     def _get_base_schema(self) -> core_schema.IntSchema:
         return core_schema.int_schema(
             ge=self.minimum,
@@ -175,10 +177,6 @@ class BooleanData(DataQualities):
         None  # type: ignore[assignment]
     )
 
-    @field_serializer("type")
-    def always_include_type(self, type_: str, _):
-        return type_
-
     def _get_base_schema(self) -> core_schema.BoolSchema:
         return core_schema.bool_schema()
 
@@ -196,10 +194,6 @@ class StringData(DataQualities):
     )
     const: str | None = None
     default: str | None = None
-
-    @field_serializer("type")
-    def always_include_type(self, type_: str, _):
-        return type_
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.enum is not None:
@@ -234,10 +228,6 @@ class ArrayData(DataQualities):
     const: list | None = None
     default: list | None = None
 
-    @field_serializer("type")
-    def always_include_type(self, type_: str, _):
-        return type_
-
     def _get_base_schema(self) -> core_schema.ListSchema | core_schema.SetSchema:
         if self.unique_items:
             return core_schema.set_schema(
@@ -258,10 +248,6 @@ class ObjectData(DataQualities):
     required: list[str] = Field(default_factory=list)
     const: dict[str, Any] | None = None
     default: dict[str, Any] | None = None
-
-    @field_serializer("type")
-    def always_include_type(self, type_: str, _):
-        return type_
 
     def _get_base_schema(self) -> core_schema.CoreSchema:
         if self.properties is None:

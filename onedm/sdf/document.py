@@ -102,4 +102,4 @@ class Document(BaseModel):
     )
 
     def to_json(self) -> str:
-        return self.model_dump_json(indent=2, exclude_defaults=True, by_alias=True)
+        return self.model_dump_json(indent=2, exclude_unset=True, by_alias=True)

@@ -37,9 +37,10 @@ def test_document_generation():
         }
     )
 
-    dump = doc.model_dump(mode="json", by_alias=True, exclude_defaults=True)
+    dump_witout_defaults = doc.model_dump(mode="json", by_alias=True, exclude_defaults=True)
+    dump_witout_unset = doc.model_dump(mode="json", by_alias=True, exclude_unset=True)
 
-    assert dump == {
+    cleaned_doc = {
         "info": {
             "title": "Test title"
         },
@@ -75,3 +76,6 @@ def test_document_generation():
             }
         }
     }
+
+    assert dump_witout_defaults == cleaned_doc
+    assert dump_witout_unset == cleaned_doc
