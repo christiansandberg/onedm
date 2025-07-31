@@ -1,6 +1,6 @@
 """Conversion from native types to sdfData."""
 
-from typing import Type
+from typing import Any, NamedTuple, Type
 
 from pydantic import TypeAdapter
 from pydantic.json_schema import GenerateJsonSchema
@@ -11,28 +11,52 @@ from . import data
 DataAdapter: TypeAdapter[data.Data] = TypeAdapter(data.Data)
 
 
+class ModelResult(NamedTuple):
+    definition: dict[str, Any]
+    data: dict[str, dict]
+
+
 def data_from_type(type_: Type) -> data.Data:
-    """Create from a native Python or Pydantic type"""
-    definition = definition_from_type(type_)
-    return DataAdapter.validate_python(definition)
+    """Create from a native Python or Pydantic type
+
+    This function will create a resolved data model, which means it will not
+    work with recursive models. Use unresolved_data_from_type for that purpose.
+    """
+    schema = TypeAdapter(type_).json_schema(schema_generator=GenerateResolvedSDF)
+    return DataAdapter.validate_python(schema)
 
 
-def definition_from_type(type_: Type) -> dict:
-    return TypeAdapter(type_).json_schema(
+def unresolved_data_from_type(type_: Type) -> ModelResult:
+    """Create an unresolved definition
+
+    The result is a tuple of the raw definition as a dict and a sdfData dict
+    including any needed definitions.
+
+    These can then be used to merge multiple definitions into a document or
+    when using recursive models.
+    """
+    schema = TypeAdapter(type_).json_schema(
         ref_template="#/sdfData/{model}", schema_generator=GenerateSDF
     )
+    if "$defs" in schema:
+        return ModelResult(schema, {"sdfData": schema.pop("$defs")})
+    return ModelResult(schema, {})
 
 
 class GenerateSDF(GenerateJsonSchema):
     """Handles the differences between JSON schema and SDF"""
 
     def generate_inner(self, schema: core_schema.CoreSchema):
-        if "ref" in schema:
-            # Only generate dereferenced schemas for now
-            del schema["ref"]  # type: ignore
         definition = super().generate_inner(schema)
+
+        if "$ref" in definition:
+            definition["sdfRef"] = definition["$ref"]
+            # Pydantic needs the $ref key, so leave it for now
+            # del definition["$ref"]
+
         # In SDF everything is nullable by default while in JSON schema it is not
         definition.setdefault("nullable", False)
+
         return definition
 
     def nullable_schema(self, schema: core_schema.NullableSchema):
@@ -42,7 +66,16 @@ class GenerateSDF(GenerateJsonSchema):
         return definition
 
     def none_schema(self, schema: core_schema.NoneSchema):
+        # Null types are not supported, replace with "const": null
         return {"const": None}
+
+    def literal_schema(self, schema: core_schema.LiteralSchema):
+        definition = super().literal_schema(schema)
+        # Null types are not supported, replace with "const": null
+        if definition.get("type") == "null":
+            del definition["type"]
+            definition["const"] = None
+        return definition
 
     def enum_schema(self, schema: core_schema.EnumSchema):
         definition = super().enum_schema(schema)
@@ -74,3 +107,12 @@ class GenerateSDF(GenerateJsonSchema):
         if definition["type"] == "number":
             definition["unit"] = "s"
         return definition
+
+
+class GenerateResolvedSDF(GenerateSDF):
+    """Generate a resolved SDF model"""
+
+    def generate_inner(self, schema: core_schema.CoreSchema):
+        if "ref" in schema:
+            del schema["ref"]  # type: ignore
+        return super().generate_inner(schema)

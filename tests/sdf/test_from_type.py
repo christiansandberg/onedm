@@ -4,10 +4,8 @@ import enum
 from pydantic import Field, BaseModel
 from typing import Annotated, Literal
 
-import pytest
-
 from onedm import sdf
-from onedm.sdf.from_type import data_from_type
+from onedm.sdf.from_type import data_from_type, unresolved_data_from_type
 
 
 def test_integer():
@@ -124,6 +122,13 @@ def test_none():
     assert "const" in data.model_fields_set
 
 
+def test_literal_none():
+    data = data_from_type(Literal[None])
+
+    assert data.const is None
+    assert "const" in data.model_fields_set
+
+
 def test_list():
     data = data_from_type(list[str])
 
@@ -190,14 +195,14 @@ def test_dataclass():
     assert not data.properties["with_default"].nullable
 
 
-@pytest.mark.xfail(reason="Recursive models not supported yet", raises=KeyError)
 def test_recursive_model():
     class TestModel(BaseModel):
         child: TestModel | None = None
 
-    data = data_from_type(TestModel)
+    definition, data = unresolved_data_from_type(TestModel)
+    assert definition["sdfRef"] == "#/sdfData/TestModel"
 
-    assert isinstance(data, sdf.ObjectData)
+    assert data["sdfData"]["TestModel"]["properties"]["child"]["sdfRef"] == "#/sdfData/TestModel"
 
 
 def test_label():
