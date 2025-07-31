@@ -29,6 +29,9 @@ from .definitions import (
 )
 from .document import Document, Information
 from .loader import SDFLoader
+from .resolver import resolve
+from .exceptions import PointerToNowhereError
+from .registry import Registry
 
 __all__ = [
     "SDFLoader",
@@ -54,4 +57,7 @@ __all__ = [
     "ArrayData",
     "AnyData",
     "Information",
+    "Registry",
+    "resolve",
+    "PointerToNowhereError",
 ]
