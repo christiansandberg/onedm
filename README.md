@@ -9,8 +9,8 @@ as best as it can and should hence be considered unstable.
 
 ## SDF
 
-Currently it supports limited loading and generation of
-[SDF](https://ietf-wg-asdf.github.io/SDF/sdf.html) documents.
+Currently it supports limited loading, resolving, and generation of
+[SDF](https://datatracker.ietf.org/doc/draft-ietf-asdf-sdf/) documents.
 
 > The Semantic Definition Format (SDF) is concerned with Things, namely physical
 > objects that are available for interaction over a network. SDF is a format for
@@ -36,7 +36,18 @@ Loading an existing SDF document:
 ```python
 from onedm import sdf
 
-loader = sdf.SDFLoader()
+
+class CustomRegistry(sdf.Registry):
+
+    def get_models(self, ns: str) -> list[dict]:
+        # TODO: Obtain all raw models for given namespace
+        return []
+
+
+registry = CustomRegistry()
+
+# Convenience class for loading, resolving, and parsing
+loader = sdf.SDFLoader(registry)
 loader.load_file("tests/sdf/test.sdf.json")
 doc = loader.to_sdf()
 
