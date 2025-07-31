@@ -5,15 +5,18 @@ import json
 from typing import Any
 
 from .document import Document
-from .registry import NullRegistry
+from .registry import Registry, NullRegistry
 from .resolver import resolve
+
+
+NULL_REGISTRY = NullRegistry()
 
 
 class SDFLoader:
 
-    def __init__(self) -> None:
+    def __init__(self, registry: Registry = NULL_REGISTRY) -> None:
         self.root: dict[str, Any] = {}
-        self.registry = NullRegistry()
+        self.registry = registry
 
     def load_file(self, path):
         with open(path, "r", encoding="utf-8") as fp:
