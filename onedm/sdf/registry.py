@@ -6,7 +6,7 @@ NamespaceURI = str
 Definition = dict[str, Any]
 
 
-class Registry(ABC):
+class Registry(ABC):  # pylint: disable=too-few-public-methods
     """Model registry interface"""
 
     @abstractmethod
@@ -15,7 +15,7 @@ class Registry(ABC):
         raise NotImplementedError
 
 
-class NullRegistry(Registry):
+class NullRegistry(Registry):  # pylint: disable=too-few-public-methods
     """A registry with no models"""
 
     def get_models(self, _: NamespaceURI) -> Iterable[dict]:
