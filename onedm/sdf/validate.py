@@ -39,7 +39,12 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Validate an SDF document")
     parser.add_argument("filename", type=Path)
     parser.add_argument("--models", type=Path, help="Directory with global models")
-    parser.add_argument("--check-refs", action="store_true", default=False, help="Check that all references could be resolved")
+    parser.add_argument(
+        "--check-refs",
+        action="store_true",
+        default=False,
+        help="Check that all references could be resolved",
+    )
 
     args = parser.parse_args()
     validate_file(args.filename, args.models, args.check_refs)

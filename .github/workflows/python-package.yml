@@ -39,3 +39,5 @@ jobs:
       run: black --check onedm
     - name: Test with pytest
       run: pytest -v
+    - name: Run validate tool
+      run: python -m onedm.sdf.validate tests/sdf/test.sdf.json
