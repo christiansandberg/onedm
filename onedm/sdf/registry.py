@@ -47,7 +47,7 @@ class InMemoryRegistry(Registry):
 
 class FileBasedRegistry(Registry):
     """A registry based on files in a directory
-    
+
     The directory is recursively scanned for files with .sdf.json extension.
     The file is parsed and the namespace and version is used to build an
     internal lookup.
@@ -68,7 +68,7 @@ class FileBasedRegistry(Registry):
         # Populate lookup
         for path in self._dir.rglob("*.sdf.json"):
             model = self._get_model_from_path(path)
-            if not "defaultNamespace" in model:
+            if "defaultNamespace" not in model:
                 # Skip models that don't contribute to a namespace
                 continue
 
