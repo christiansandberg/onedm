@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 import logging
+from typing import NamedTuple
 from .registry import Registry, Definition, NullRegistry
 from . import exceptions
 
@@ -6,92 +9,119 @@ from . import exceptions
 logger = logging.getLogger(__name__)
 
 
-def resolve(model: dict, registry: Registry | None = None) -> dict:
-    """Resolve a model
+class DerefResult(NamedTuple):
+    definition: Definition
+    resolver: Resolver
 
-    The provided model or SDF document is scanned for sdfRef references and
-    attempts to resolve them, leaving any unresolved references as-is.
 
-    To be able to resolve from global namespaces, a registry must be provided.
+class Resolver:
+    """SDF resolver
 
-    :param model: The model to resolve
-    :param registry: A registry to resolve global references with
+    Allows definitions to be resolved and URIs to be dereferenced.
+    To be able to dereference local references, a model must be provided.
+    To dereference global URIs, a registry must be provided.
     """
-    return resolve_definition(model, model, registry or NullRegistry())
 
+    @classmethod
+    def from_registry(cls, registry: Registry) -> Resolver:
+        """Create a Resolver from a registry alone
 
-def resolve_ref(
-    ref: str, base_model: dict, registry: Registry
-) -> tuple[dict, Definition]:
-    if ":" in ref:
-        # Reference to a global namespace
-        ns_prefix, path = ref.split(":", maxsplit=1)
-        ns = base_model["namespace"][ns_prefix]
-        # Get a list of all models contributing to this namespace
-        models = registry.get_models(ns)
-    else:
-        # Reference to a local (?) definition
-        path = ref
-        models = [base_model]
-        if "defaultNamespace" in base_model:
-            # Local reference or to a model in the same namespace
-            ns_prefix = base_model["defaultNamespace"]
-            ns = base_model["namespace"][ns_prefix]
-            models.extend(registry.get_models(ns))
+        Will only be able to dereference global URIs.
+        """
+        return cls({}, registry)
+
+    @classmethod
+    def from_document(cls, document: dict) -> Resolver:
+        """Create a Resolver from a SDF document
+
+        Will only be able to dereference local pointers.
+        """
+        return cls(document, NullRegistry())
+
+    def __init__(self, document: dict, registry: Registry):
+        self._document = document
+        self._registry = registry
+
+    def deref(self, uri: str) -> DerefResult:
+        """Dereference URI
+
+        The URI must contain both the namespace and fragment identifier.
+
+        :param uri: A local or global reference with short namespace prefix
+        :returns: A tuple of an unresolved definition and a resolver object
+                  for further resolving it
+        """
+        ns, path = uri.split("#", maxsplit=1)
+        return self._deref_ns_and_path(ns, path)
+
+    def resolve(self, definition: Definition) -> Definition:
+        """Resolve a single definition
+
+        :param definition: A definition to be resolved
+        :returns: A resolved copy
+        """
+        if "sdfRef" in definition:
+            try:
+                unresolved_original, resolver = self._dereference_internal(
+                    definition["sdfRef"]
+                )
+            except exceptions.PointerToNowhereError as exc:
+                logger.warning("%s", exc)
+                original = {}
+                patch = definition
+            else:
+                original = resolver.resolve(unresolved_original)
+                patch = definition.copy()
+                del patch["sdfRef"]
         else:
-            # Can only be resolved by the current model
+            original = {}
+            patch = definition
+
+        if not patch:
+            return original
+
+        self._merge(original, patch)
+        return original
+
+    def _dereference_internal(self, ref: str) -> DerefResult:
+        if ":" in ref:
+            # Reference to a global namespace
+            ns_prefix, path = ref.split(":#", maxsplit=1)
+            ns = self._document["namespace"][ns_prefix]
+        else:
+            # Reference to a local definition
+            path = ref
             ns = ""
 
-    # Go through the models that may contain a matching path
-    for model in models:
-        # Start at the root of the model
-        value = model
-        try:
-            for segment in path.split("/")[1:]:
-                if not isinstance(value, dict):
-                    raise TypeError(f"{segment} in {ns}{ref} is not an object")
-                value = value[segment]
-            return model, value
-        except KeyError:
-            pass
+        return self._deref_ns_and_path(ns, path)
 
-    raise exceptions.PointerToNowhereError(f"Could not find {ns}{path}")
+    def _deref_ns_and_path(self, ns: str, path: str) -> DerefResult:
+        models = self._registry.get_models(ns) if ns else [self._document]
 
+        # Go through the models that may contain a matching path
+        for model in models:
+            # Start at the root of the model
+            definition: Definition = model
+            try:
+                for segment in path.split("/")[1:]:
+                    if not isinstance(definition, dict):
+                        raise TypeError(f"{segment} in {ns}#{path} is not an object")
+                    definition = definition[segment]
+                return DerefResult(definition, Resolver(model, self._registry))
+            except KeyError:
+                pass
 
-def resolve_definition(
-    definition: Definition, base_model: dict, registry: Registry
-) -> Definition:
-    """Resolve a single definition
+        raise exceptions.PointerToNowhereError(f"Could not find {ns}{path}")
 
-    :param definition: A definition to be resolved
-    :param base_model: The model to resolve local references with
-    :param registry: A registry to resolve global references with
-    """
-    if "sdfRef" in definition:
-        try:
-            ref_model, target = resolve_ref(definition["sdfRef"], base_model, registry)
-            patched = resolve_definition(target, ref_model, registry)
-        except exceptions.PointerToNowhereError:
-            logger.warning("Could not resolve %s", definition["sdfRef"])
-            ref_model = base_model
-            patched = {}
-    else:
-        ref_model = base_model
-        patched = {}
-
-    merge(patched, definition, base_model, registry)
-    return patched
-
-
-def merge(target: dict, patch: dict, base_model: dict, registry: Registry) -> None:
-    # Recursive merge patch
-    for name, value in patch.items():
-        if isinstance(value, dict):
-            # May contain further references
-            target[name] = resolve_definition(value, base_model, registry)
-        elif value is None and name in target:
-            # Deleted
-            del target[name]
-        else:
-            # Added or replaced
-            target[name] = value
+    def _merge(self, original: dict, patch: dict) -> None:
+        # Recursive merge patch
+        for name, value in patch.items():
+            if isinstance(value, dict):
+                # May contain further references
+                original[name] = self.resolve(value)
+            elif value is None and name in original:
+                # Deleted
+                del original[name]
+            else:
+                # Added or replaced
+                original[name] = value

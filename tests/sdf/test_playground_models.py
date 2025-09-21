@@ -48,3 +48,11 @@ def test_genericonoff(playground: Path):
 
     on_off = doc.objects["GenericOnOff"].properties["OnOff"]
     assert isinstance(on_off, sdf.AnyProperty)
+
+
+def test_resolve_uri(playground: Path):
+    registry = sdf.registry.FileBasedRegistry(playground)
+    resolver = sdf.Resolver.from_registry(registry)
+    definition, resolver = resolver.deref("https://onedm.org/ecosystem/ocf#/sdfObject/alarm")
+    required, _ = resolver.deref(definition["sdfRequired"][0])
+    assert required["description"] == "This Property describes the status of the alarm: true - on, false - off."

@@ -76,7 +76,8 @@ def test_multi_level_sdf_ref():
     registry.add_model(example1_a)
     registry.add_model(example1_b)
 
-    resolved = sdf.resolve(top_level_doc, registry)
+    resolver = sdf.Resolver(top_level_doc, registry)
+    resolved = resolver.resolve(top_level_doc)
     doc = sdf.Document.model_validate(resolved)
 
     property = doc.properties["example_object"]
@@ -96,7 +97,8 @@ def test_pointer_to_nowhere():
         },
     }
 
-    resolved = sdf.resolve(top_level_doc)
+    resolver = sdf.Resolver.from_document(top_level_doc)
+    resolved = resolver.resolve(top_level_doc)
     assert resolved == top_level_doc
 
 
@@ -112,7 +114,8 @@ def test_unresolvable_reference():
         },
     }
 
-    resolved = sdf.resolve(top_level_doc)
+    resolver = sdf.Resolver.from_document(top_level_doc)
+    resolved = resolver.resolve(top_level_doc)
     doc = sdf.Document.model_validate(resolved)
 
     assert doc.data["Example3"].ref == "example:#/sdfData/Example"

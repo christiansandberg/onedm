@@ -6,7 +6,7 @@ from typing import Any
 
 from .document import Document
 from .registry import Registry, NullRegistry
-from .resolver import resolve
+from .resolver import Resolver
 
 
 NULL_REGISTRY = NullRegistry()
@@ -26,7 +26,8 @@ class SDFLoader:
         self.load_from_dict(json.load(fp))
 
     def load_from_dict(self, doc: dict):
-        self.root = resolve(doc, self.registry)
+        self.root = doc
 
     def to_sdf(self) -> Document:
-        return Document.model_validate(self.root)
+        doc = Resolver(self.root, self.registry).resolve(self.root)
+        return Document.model_validate(doc)
