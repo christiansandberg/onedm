@@ -108,6 +108,11 @@ class Object(CommonQualities):
             "and semantic anchor concepts"
         ),
     )
+    context: dict[str, Data] = Field(
+        default_factory=dict,
+        alias="sdfContext",
+        description="Static, descriptive, and non-interactive metadata",
+    )
     sdf_required: list[str | Literal[True]] = Field(default_factory=list)
     # If array of objects
     min_items: NonNegativeInt | None = None
@@ -147,6 +152,11 @@ class Thing(CommonQualities):
             "Common modeling patterns, data constraints, "
             "and semantic anchor concepts"
         ),
+    )
+    context: dict[str, Data] = Field(
+        default_factory=dict,
+        alias="sdfContext",
+        description="Static, descriptive, and non-interactive metadata",
     )
     sdf_required: list[str | Literal[True]] = Field(default_factory=list)
     # If array of things
