@@ -8,12 +8,12 @@ from pydantic_core import core_schema
 
 from . import data
 
-DataAdapter: TypeAdapter[data.Data] = TypeAdapter(data.Data)
+data_adapter: TypeAdapter[data.Data] = TypeAdapter(data.Data)
 
 
 class ModelResult(NamedTuple):
     definition: dict[str, Any]
-    data: dict[str, dict]
+    map: dict[str, dict]
 
 
 def data_from_type(type_: Type) -> data.Data:
@@ -22,25 +22,43 @@ def data_from_type(type_: Type) -> data.Data:
     This function will create a resolved data model, which means it will not
     work with recursive models. Use unresolved_data_from_type for that purpose.
     """
-    schema = TypeAdapter(type_).json_schema(schema_generator=GenerateResolvedSDF)
-    return DataAdapter.validate_python(schema)
+    schema = TypeAdapter(type_).json_schema(
+        schema_generator=GenerateResolvedSDF, mode="serialization"
+    )
+    return data_adapter.validate_python(schema)
 
 
-def unresolved_data_from_type(type_: Type) -> ModelResult:
+def unresolved_data_from_type(
+    type_: Type, ref_template="#/sdfData/{model}"
+) -> ModelResult:
     """Create an unresolved definition
 
-    The result is a tuple of the raw definition as a dict and a sdfData dict
-    including any needed definitions.
+    The result is a tuple of the raw definition as a dict and a mapping from
+    ref pointer names to their definitions.
+    The data definitions must be placed according to the pointers in the final
+    document.
+
+    Example:
+
+        class MyEnum(enum.IntEnum):
+            ONE = 1
+
+        definition, data = unresolved_data_from_type(MyEnum)
+        # {"sdfRef": "#/sdfData/MyEnum"}
+        #
+        # {
+        #     "#/sdfData/MyEnum": {...}
+        # }
 
     These can then be used to merge multiple definitions into a document or
     when using recursive models.
     """
     schema = TypeAdapter(type_).json_schema(
-        ref_template="#/sdfData/{model}", schema_generator=GenerateSDF
+        ref_template=ref_template, schema_generator=GenerateSDF, mode="serialization"
     )
-    if "$defs" in schema:
-        return ModelResult(schema, {"sdfData": schema.pop("$defs")})
-    return ModelResult(schema, {})
+    defs: dict[str, dict] = schema.pop("$defs", {})
+    data_map = {ref_template.format(model=name): model for name, model in defs.items()}
+    return ModelResult(schema, data_map)
 
 
 class GenerateSDF(GenerateJsonSchema):
@@ -49,10 +67,15 @@ class GenerateSDF(GenerateJsonSchema):
     def generate_inner(self, schema: core_schema.CoreSchema):
         definition = super().generate_inner(schema)
 
+        # SDF use sdfRef instead of $ref
         if "$ref" in definition:
             definition["sdfRef"] = definition["$ref"]
             # Pydantic needs the $ref key, so leave it for now
             # del definition["$ref"]
+
+        # SDF use label instead of title
+        if "title" in definition:
+            definition["label"] = definition.pop("title")
 
         # In SDF everything is nullable by default while in JSON schema it is not
         definition.setdefault("nullable", False)
@@ -77,13 +100,20 @@ class GenerateSDF(GenerateJsonSchema):
             definition["const"] = None
         return definition
 
+    def tuple_schema(self, schema: core_schema.TupleSchema):
+        definition = super().tuple_schema(schema)
+        # SDF does not support tuples, allow any item type
+        if "prefixItems" in definition:
+            del definition["prefixItems"]
+        definition["items"] = {}
+        return definition
+
     def enum_schema(self, schema: core_schema.EnumSchema):
         definition = super().enum_schema(schema)
+        definition["sdfChoice"] = {
+            member.name: {"const": member.value} for member in schema["members"]
+        }
         if "enum" in definition:
-            # Replace enum with sdfChoice
-            definition["sdfChoice"] = {
-                member.name: {"const": member.value} for member in schema["members"]
-            }
             del definition["enum"]
         return definition
 

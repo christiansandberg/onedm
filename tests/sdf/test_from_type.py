@@ -1,7 +1,8 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from datetime import datetime
 import enum
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, PlainSerializer
 from typing import Annotated, Literal
 
 from onedm import sdf
@@ -55,6 +56,10 @@ def test_enum():
     assert data.choices["ONE"].const == 1
     assert data.choices["TWO"].const == "two"
     assert not data.nullable
+
+    unresolved, models = unresolved_data_from_type(MyEnum)
+    assert unresolved["sdfRef"] == "#/sdfData/MyEnum"
+    assert "#/sdfData/MyEnum" in models
 
 
 def test_int_enum():
@@ -199,10 +204,40 @@ def test_recursive_model():
     class TestModel(BaseModel):
         child: TestModel | None = None
 
-    definition, data = unresolved_data_from_type(TestModel)
+    definition, map = unresolved_data_from_type(TestModel)
     assert definition["sdfRef"] == "#/sdfData/TestModel"
 
-    assert data["sdfData"]["TestModel"]["properties"]["child"]["sdfRef"] == "#/sdfData/TestModel"
+    assert "#/sdfData/TestModel" in map
+    # References itself
+    assert (
+        map["#/sdfData/TestModel"]["properties"]["child"]["sdfRef"]
+        == "#/sdfData/TestModel"
+    )
+
+
+def test_custom_serializer():
+    UnixTime = Annotated[
+        datetime,
+        PlainSerializer(datetime.timestamp, return_type=float),
+        Field(json_schema_extra={"sdfType": "unix-time"}),
+    ]
+
+    data = data_from_type(UnixTime)
+    assert isinstance(data, sdf.NumberData)
+    assert data.sdf_type == "unix-time"
+
+
+def test_override_fields():
+    class MyEnum(enum.IntEnum):
+        ONE = 1
+
+    MyEnumWithLabel = Annotated[MyEnum, Field(title="Custom label")]
+
+    definition, data = unresolved_data_from_type(MyEnumWithLabel)
+    # Should re-use existing definition of MyEnum
+    assert definition["sdfRef"] == "#/sdfData/MyEnum"
+    assert definition["label"] == "Custom label"
+    assert "#/sdfData/MyEnum" in data
 
 
 def test_label():
