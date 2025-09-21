@@ -111,7 +111,7 @@ class Resolver:
             except KeyError:
                 pass
 
-        raise exceptions.PointerToNowhereError(f"Could not find {ns}{path}")
+        raise exceptions.PointerToNowhereError(f"Could not find {ns}#{path}")
 
     def _merge(self, original: dict, patch: dict) -> None:
         # Recursive merge patch
