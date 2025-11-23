@@ -28,7 +28,7 @@ class NullRegistry(Registry):  # pylint: disable=too-few-public-methods
         return []
 
 
-class CombinedRegistry(Registry):
+class CombinedRegistry(Registry):  # pylint: disable=too-few-public-methods
     """A registry combining multiple registries"""
 
     def __init__(self, registries: list[Registry]):

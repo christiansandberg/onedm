@@ -66,6 +66,7 @@ Property = Union[
 ]
 
 
+# pylint: disable-next=invalid-name
 PropertyAdapter: TypeAdapter[Property] = TypeAdapter(Property)
 
 
