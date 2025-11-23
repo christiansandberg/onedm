@@ -10,8 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 class DerefResult(NamedTuple):
+    """Dereferencing result"""
+
     definition: Definition
+    """The unresolved definition"""
     resolver: Resolver
+    """A resolver to use when resolving the definition"""
 
 
 class Resolver:
@@ -60,24 +64,31 @@ class Resolver:
         :param definition: A definition to be resolved
         :returns: A resolved copy
         """
-        if "sdfRef" in definition:
+        ref: str | None = definition.get("sdfRef")
+        if ref:
             try:
-                unresolved_original, resolver = self._dereference_internal(
-                    definition["sdfRef"]
-                )
-            except exceptions.PointerToNowhereError as exc:
+                unresolved_original, resolver = self._dereference_internal(ref)
+            except exceptions.UnresolvableReferenceError as exc:
+                # Couldn't dereference the global reference, but this may be
+                # intentional, so leave the sdfRef and let the user handle
+                # remaining references in the document.
                 logger.warning("%s", exc)
                 original = {}
                 patch = definition
             else:
+                # Resolve the referenced definition
                 original = resolver.resolve(unresolved_original)
+                # Remove the sdfRef key from the patch
                 patch = definition.copy()
                 del patch["sdfRef"]
         else:
+            # No reference in this definition, but we still need to process
+            # everything down the tree
             original = {}
             patch = definition
 
         if not patch:
+            # Pure reference, nothing to patch
             return original
 
         self._merge(original, patch)
@@ -86,7 +97,7 @@ class Resolver:
     def _dereference_internal(self, ref: str) -> DerefResult:
         if ":" in ref:
             # Reference to a global namespace
-            ns_prefix, path = ref.split(":#", maxsplit=1)
+            ns_prefix, path = ref.split(":", maxsplit=1)
             ns = self._document["namespace"][ns_prefix]
         else:
             # Reference to a local definition
@@ -96,7 +107,7 @@ class Resolver:
         return self._deref_ns_and_path(ns, path)
 
     def _deref_ns_and_path(self, ns: str, path: str) -> DerefResult:
-        models = self._registry.get_models(ns) if ns else [self._document]
+        models = self._registry.get_documents(ns) if ns else [self._document]
 
         # Go through the models that may contain a matching path
         for model in models:
@@ -111,7 +122,9 @@ class Resolver:
             except KeyError:
                 pass
 
-        raise exceptions.PointerToNowhereError(f"Could not find {ns}#{path}")
+        if ns:
+            raise exceptions.UnresolvableReferenceError(f"Could not find {ns}{path}")
+        raise exceptions.InvalidLocalReferenceError(f"Could not find {path}")
 
     def _merge(self, original: dict, patch: dict) -> None:
         # Recursive merge patch

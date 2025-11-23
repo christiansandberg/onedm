@@ -6,10 +6,14 @@
     "license": "https://example.com/license"
   },
   "namespace": {
-    "cap": "https://example.com/capability/cap"
+    "cap": "https://example.com/capability/cap",
+    "ocf": "https://onedm.org/ecosystem/ocf"
   },
   "defaultNamespace": "cap",
   "sdfProperty": {
+    "torque": {
+      "sdfRef": "ocf:#/sdfObject/torque/sdfProperty/torque"
+    },
     "IntegerProperty": {
       "label": "Example integer",
       "sdfRef": "#/sdfData/Integer"

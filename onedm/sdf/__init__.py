@@ -30,7 +30,6 @@ from .definitions import (
 from .document import Document, Information
 from .loader import SDFLoader
 from .resolver import Resolver
-from .exceptions import PointerToNowhereError
 from .registry import Registry
 
 __all__ = [
@@ -59,5 +58,4 @@ __all__ = [
     "Information",
     "Registry",
     "Resolver",
-    "PointerToNowhereError",
 ]

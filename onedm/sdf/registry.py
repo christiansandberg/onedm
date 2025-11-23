@@ -10,22 +10,37 @@ Definition = dict[str, Any]
 
 
 class Registry(ABC):  # pylint: disable=too-few-public-methods
-    """Model registry interface"""
+    """Document registry interface"""
 
     @abstractmethod
-    def get_models(self, ns: NamespaceURI) -> Iterable[dict]:
-        """Get all models for given namespace URI
+    def get_documents(self, ns: NamespaceURI) -> Iterable[dict]:
+        """Get all documents contributing to a given namespace URI
 
-        The models should be sorted by version in reverse order.
+        The documents should be sorted by version in reverse order.
         """
         raise NotImplementedError
 
 
 class NullRegistry(Registry):  # pylint: disable=too-few-public-methods
-    """A registry with no models"""
+    """A registry with no documents"""
 
-    def get_models(self, _: NamespaceURI) -> Iterable[dict]:
+    def get_documents(self, _: NamespaceURI) -> Iterable[dict]:
         return []
+
+
+class CombinedRegistry(Registry):
+    """A registry combining multiple registries"""
+
+    def __init__(self, registries: list[Registry]):
+        self.registries = registries
+
+    def get_documents(self, ns: NamespaceURI) -> Iterable[dict]:
+        models = (
+            model
+            for registry in self.registries
+            for model in registry.get_documents(ns)
+        )
+        return sorted(models, key=_get_version_from_model, reverse=True)
 
 
 class InMemoryRegistry(Registry):
@@ -34,14 +49,14 @@ class InMemoryRegistry(Registry):
     def __init__(self) -> None:
         self._db: dict[NamespaceURI, list[dict]] = {}
 
-    def add_model(self, model: dict) -> None:
-        """Add a model"""
+    def add_document(self, model: dict) -> None:
+        """Add a document"""
         assert "defaultNamespace" in model, "Model must have a defaultNamespace"
         ns: NamespaceURI = model["namespace"][model["defaultNamespace"]]
         models = self._db.setdefault(ns, [])
         bisect.insort_left(models, model, key=_get_version_from_model)
 
-    def get_models(self, ns: NamespaceURI) -> Iterable[dict]:
+    def get_documents(self, ns: NamespaceURI) -> Iterable[dict]:
         return reversed(self._db.get(ns, []))
 
 
@@ -51,8 +66,8 @@ class FileBasedRegistry(Registry):
     The directory is recursively scanned for files with .sdf.json extension.
     The file is parsed and the namespace and version is used to build an
     internal lookup.
-    The parsed models are discarded and will be loaded on demand when
-    get_models() is called, making it suitable for directories with many files.
+    The parsed documents are discarded and will be loaded on demand when
+    get_documents() is called, making it suitable for directories with many files.
     """
 
     def __init__(self, models_dir: Path | str) -> None:
@@ -85,7 +100,7 @@ class FileBasedRegistry(Registry):
         with path.open("r") as fp:
             return json.load(fp)
 
-    def get_models(self, ns: NamespaceURI) -> Iterable[dict]:
+    def get_documents(self, ns: NamespaceURI) -> Iterable[dict]:
         return map(self._get_model_from_path, reversed(self._lookup.get(ns, [])))
 
 

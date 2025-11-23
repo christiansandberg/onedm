@@ -1,4 +1,6 @@
+import pytest
 from onedm import sdf
+import onedm.sdf.exceptions
 import onedm.sdf.registry
 
 
@@ -72,9 +74,9 @@ def test_multi_level_sdf_ref():
     }
 
     registry = onedm.sdf.registry.InMemoryRegistry()
-    registry.add_model(example2)
-    registry.add_model(example1_a)
-    registry.add_model(example1_b)
+    registry.add_document(example2)
+    registry.add_document(example1_a)
+    registry.add_document(example1_b)
 
     resolver = sdf.Resolver(top_level_doc, registry)
     resolved = resolver.resolve(top_level_doc)
@@ -98,8 +100,8 @@ def test_pointer_to_nowhere():
     }
 
     resolver = sdf.Resolver.from_document(top_level_doc)
-    resolved = resolver.resolve(top_level_doc)
-    assert resolved == top_level_doc
+    with pytest.raises(onedm.sdf.exceptions.InvalidLocalReferenceError):
+        resolver.resolve(top_level_doc)
 
 
 def test_unresolvable_reference():
