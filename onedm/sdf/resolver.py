@@ -130,8 +130,12 @@ class Resolver:
         # Recursive merge patch
         for name, value in patch.items():
             if isinstance(value, dict):
-                # May contain further references
-                original[name] = self.resolve(value)
+                value = self.resolve(value)
+                target = original.get(name)
+                if target and isinstance(target, dict):
+                    self._merge(target, value)
+                else:
+                    original[name] = value
             elif value is None and name in original:
                 # Deleted
                 del original[name]
