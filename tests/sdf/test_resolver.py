@@ -21,6 +21,13 @@ def test_multi_level_sdf_ref():
                         "minimum": None,
                         # Override maximum
                         "maximum": 42,
+                        # Adds another choice
+                        "sdfChoice": {
+                            "CHOICE_2": {
+                                # A reference embedded inside the patch
+                                "sdfRef": "#/sdfData/Integer2",
+                            },
+                        },
                     }
                 }
             }
@@ -29,7 +36,10 @@ def test_multi_level_sdf_ref():
             "Example3": {
                 # References a definition in a global namespace
                 "sdfRef": "example2:#/sdfData/Example2",
-            }
+            },
+            "Integer2": {
+                "const": 2,
+            },
         },
     }
 
@@ -60,6 +70,11 @@ def test_multi_level_sdf_ref():
                 "minimum": 0,
                 "maximum": 10,
                 "default": 0,
+                "sdfChoice": {
+                    "CHOICE_1": {
+                        "const": 1,
+                    },
+                },
             }
         },
     }
@@ -88,6 +103,8 @@ def test_multi_level_sdf_ref():
     assert property.properties["integer"].minimum is None
     assert property.properties["integer"].maximum == 42
     assert property.properties["integer"].default == 0
+    assert property.properties["integer"].choices["CHOICE_1"].const == 1
+    assert property.properties["integer"].choices["CHOICE_2"].const == 2
 
 
 def test_pointer_to_nowhere():

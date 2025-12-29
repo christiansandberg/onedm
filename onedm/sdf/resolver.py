@@ -130,11 +130,15 @@ class Resolver:
         # Recursive merge patch
         for name, value in patch.items():
             if isinstance(value, dict):
+                # Resolve the patch value first
                 value = self.resolve(value)
+                # Obtain the target dictionary (if any)
                 target = original.get(name)
-                if target and isinstance(target, dict):
+                if isinstance(target, dict):
+                    # Merge the two dictionaries
                     self._merge(target, value)
                 else:
+                    # Added or replaced
                     original[name] = value
             elif value is None and name in original:
                 # Deleted
