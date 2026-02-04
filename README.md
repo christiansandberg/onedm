@@ -10,8 +10,8 @@ as best as it can and should hence be considered unstable.
 ## SDF
 
 Currently it supports limited loading, resolving, and generation of
-[SDF](https://datatracker.ietf.org/doc/draft-ietf-asdf-sdf/) documents
-as specified in the to-be-published RFC 9880.
+[SDF](https://datatracker.ietf.org/doc/rfc9880/) documents
+as specified by RFC 9880.
 
 > The Semantic Definition Format (SDF) is concerned with Things, namely physical
 > objects that are available for interaction over a network. SDF is a format for
