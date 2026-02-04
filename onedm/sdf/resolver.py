@@ -5,7 +5,6 @@ from typing import NamedTuple
 from .registry import Registry, Definition, NullRegistry
 from . import exceptions
 
-
 logger = logging.getLogger(__name__)
 
 

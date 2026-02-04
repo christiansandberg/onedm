@@ -8,7 +8,6 @@ from .document import Document
 from .registry import Registry, NullRegistry
 from .resolver import Resolver
 
-
 NULL_REGISTRY = NullRegistry()
 
 
